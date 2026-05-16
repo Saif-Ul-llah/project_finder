@@ -95,7 +95,14 @@ export function FreelancerProjectCard({ project }: ProjectCardProps) {
 
           <div className="flex justify-between items-start gap-4">
             <h3 className="font-semibold text-lg sm:text-xl text-foreground line-clamp-2 group-hover:text-primary transition-colors pr-4 flex-1">
-              {project.title}
+              <a 
+                href={`https://www.freelancer.com/${project.seo_url.startsWith('/') ? project.seo_url.substring(1) : project.seo_url}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
+                {project.title}
+              </a>
             </h3>
             <Button variant="ghost" size="icon" className="rounded-full hover:bg-red-50 hover:text-red-500 transition-colors -mt-1 flex-shrink-0">
               <Heart className="w-5 h-5" />
@@ -174,7 +181,7 @@ export function FreelancerProjectCard({ project }: ProjectCardProps) {
           </div>
 
           <a 
-            href={`https://freelancer.com/${project.seo_url}`}
+            href={`https://www.freelancer.com/${project.seo_url.startsWith('/') ? project.seo_url.substring(1) : project.seo_url}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-auto w-full inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 shadow-sm"
