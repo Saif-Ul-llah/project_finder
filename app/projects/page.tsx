@@ -36,7 +36,7 @@ function ProjectsPageContent() {
       try {
         setLoading(true);
         setError(null);
-        
+
         const result = await fetchContests({
           page: Math.max(0, page - 1),
           limit: ITEMS_PER_PAGE,
@@ -63,7 +63,7 @@ function ProjectsPageContent() {
 
   // Apply client-side filtering
   useEffect(() => {
-    let results = contests;
+    let results: any = contests;
 
     // Search filter
     if (search) {
@@ -96,7 +96,7 @@ function ProjectsPageContent() {
 
   const handleFiltersChange = useCallback((filters: FilterState) => {
     const params = new URLSearchParams(searchParams);
-    
+
     if (filters.budgetMin) {
       params.set('budgetMin', filters.budgetMin.toString());
     } else {
@@ -132,47 +132,61 @@ function ProjectsPageContent() {
   const paginatedContests = filteredContests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 sm:py-10">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
-            Freelance Projects & Contests
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-br from-primary/10 via-background to-background border-b border-border/50">
+        <div className="container mx-auto px-4 py-12 sm:py-16">
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground mb-4">
+            Discover <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">Freelance</span> Projects
           </h1>
-          <p className="text-muted-foreground">
-            Browse thousands of projects from clients around the world
+          <p className="text-lg text-muted-foreground max-w-2xl">
+            Browse thousands of projects and contests from clients around the world. Find your next big opportunity and start building today.
           </p>
         </div>
+      </div>
 
-        {/* Search and Filters Bar */}
-        <div className="flex flex-col gap-4 mb-8">
-          <SearchBar 
-            placeholder="Search projects..." 
+      <div className="container mx-auto px-4 py-8 flex-1">
+
+        {/* Search Bar (Full Width) */}
+        <div className="mb-8">
+          <SearchBar
+            placeholder="Search projects..."
             onSearch={handleSearch}
             defaultValue={search}
           />
-          
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-            <div className="flex gap-3 flex-wrap">
-              <AdvancedFilters 
-                onFiltersChange={handleFiltersChange}
-                initialFilters={{ budgetMin, budgetMax }}
-              />
-            </div>
-            
-            <SortingSelect 
-              value={sortBy}
-              onSortChange={handleSortChange}
-            />
-          </div>
         </div>
 
-        {/* Results Count */}
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Showing <span className="font-semibold text-foreground">{paginatedContests.length}</span> of <span className="font-semibold text-foreground">{filteredContests.length}</span> projects
-          </p>
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar Filters (Desktop) */}
+          <div className="hidden lg:block lg:col-span-1 relative">
+            <AdvancedFilters
+              onFiltersChange={handleFiltersChange}
+              initialFilters={{ budgetMin, budgetMax }}
+              inline={true}
+            />
+          </div>
+
+          {/* Main Listings Area */}
+          <div className="lg:col-span-3 flex flex-col">
+            {/* Mobile Filters & Sorting Row */}
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between mb-6">
+              <div className="lg:hidden flex gap-3 flex-wrap">
+                <AdvancedFilters
+                  onFiltersChange={handleFiltersChange}
+                  initialFilters={{ budgetMin, budgetMax }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between w-full lg:w-auto">
+                <p className="text-sm text-muted-foreground mr-4">
+                  <span className="font-semibold text-foreground">{filteredContests.length}</span> projects found
+                </p>
+                <SortingSelect
+                  value={sortBy}
+                  onSortChange={handleSortChange}
+                />
+              </div>
+            </div>
 
         {/* Error State */}
         {error && (
@@ -190,10 +204,10 @@ function ProjectsPageContent() {
           </div>
         )}
 
-        {/* Projects Grid */}
+        {/* Projects List View */}
         {!loading && paginatedContests.length > 0 && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <div className="flex flex-col gap-5 mb-8">
               {paginatedContests.map((contest) => (
                 <ContestCard key={contest.project_id} contest={contest} />
               ))}
@@ -212,14 +226,25 @@ function ProjectsPageContent() {
 
         {/* Empty State */}
         {!loading && paginatedContests.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="flex flex-col items-center justify-center py-16 bg-card border border-border/50 rounded-xl text-center">
             <div className="text-6xl mb-4">🔍</div>
             <h3 className="text-lg font-semibold text-foreground mb-2">No projects found</h3>
-            <p className="text-muted-foreground mb-4">
-              Try adjusting your filters or search terms
+            <p className="text-muted-foreground mb-4 max-w-md">
+              We couldn't find any projects matching your criteria. Try adjusting your filters or search terms.
             </p>
+            <button onClick={() => {
+              const params = new URLSearchParams(searchParams);
+              params.delete('search');
+              params.delete('budgetMin');
+              params.delete('budgetMax');
+              window.history.replaceState(null, '', `?${params.toString()}`);
+            }} className="text-primary hover:underline font-medium">
+              Clear all filters
+            </button>
           </div>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );

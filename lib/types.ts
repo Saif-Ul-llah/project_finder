@@ -50,6 +50,16 @@ export interface Project {
   location_details?: LocationDetails;
   local_details?: LocalDetails;
   upgrade_details?: UpgradeDetails;
+  budget?: {
+    minimum: number;
+    maximum: number;
+    project_type: string;
+  };
+  bid_stats?: {
+    bid_count: number;
+    bid_avg: number;
+  };
+  submitdate?: number;
 }
 
 export interface Currency {

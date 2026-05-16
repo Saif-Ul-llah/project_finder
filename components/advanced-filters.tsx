@@ -13,10 +13,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter
+} from "@/components/ui/sheet";
 
 interface AdvancedFiltersProps {
   onFiltersChange: (filters: FilterState) => void;
   initialFilters?: FilterState;
+  inline?: boolean;
 }
 
 export interface FilterState {
@@ -66,6 +76,7 @@ const DATE_RANGE_OPTIONS = [
 export function AdvancedFilters({
   onFiltersChange,
   initialFilters = {},
+  inline = false,
 }: AdvancedFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<FilterState>(initialFilters);
@@ -132,157 +143,167 @@ export function AdvancedFilters({
     v => v !== undefined && v !== null
   ).length;
 
-  return (
-    <div className="relative">
-      <Button
-        variant="outline"
-        onClick={() => setIsOpen(!isOpen)}
-        className="gap-2"
-      >
-        <ChevronDown className="h-4 w-4" />
-        Filters
-        {activeFilterCount > 0 && (
-          <span className="ml-2 inline-flex items-center rounded-full bg-primary px-2.5 py-0.5 text-xs font-medium text-primary-foreground">
-            {activeFilterCount}
-          </span>
-        )}
-      </Button>
-
-      {isOpen && (
-        <div className="absolute top-full right-0 z-50 mt-2 w-80 rounded-lg border border-border bg-card p-4 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">Advanced Filters</h3>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {/* Budget Range */}
-            <div>
-              <Label className="text-sm font-medium">Budget Range</Label>
-              <div className="flex gap-2 mt-2">
-                <Input
-                  type="number"
-                  placeholder="Min"
-                  value={filters.budgetMin || ''}
-                  onChange={(e) => handleBudgetMinChange(e.target.value)}
-                  className="w-full"
-                />
-                <Input
-                  type="number"
-                  placeholder="Max"
-                  value={filters.budgetMax || ''}
-                  onChange={(e) => handleBudgetMaxChange(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
-            {/* Status */}
-            <div>
-              <Label className="text-sm font-medium">Status</Label>
-              <Select value={filters.status || ''} onValueChange={handleStatusChange}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Date Range */}
-            <div>
-              <Label className="text-sm font-medium">Posted</Label>
-              <Select value={filters.dateRange || 'all'} onValueChange={handleDateRangeChange}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Select date range" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DATE_RANGE_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Bid Count Range */}
-            <div>
-              <Label className="text-sm font-medium">Bid Count</Label>
-              <div className="flex gap-2 mt-2">
-                <Input
-                  type="number"
-                  placeholder="Min"
-                  value={filters.bidCountMin || ''}
-                  onChange={(e) => handleBidCountMinChange(e.target.value)}
-                  className="w-full"
-                />
-                <Input
-                  type="number"
-                  placeholder="Max"
-                  value={filters.bidCountMax || ''}
-                  onChange={(e) => handleBidCountMaxChange(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
-            {/* Rating */}
-            <div>
-              <Label className="text-sm font-medium">Min Rating</Label>
-              <Input
-                type="number"
-                placeholder="e.g., 4.5"
-                min="0"
-                max="5"
-                step="0.1"
-                value={filters.rating || ''}
-                onChange={(e) => handleRatingChange(e.target.value)}
-                className="mt-2"
-              />
-            </div>
-
-            {/* Skills */}
-            <div>
-              <Label className="text-sm font-medium">Skills</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {SKILL_OPTIONS.map((skill) => (
-                  <label key={skill} className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox
-                      checked={selectedSkills.includes(skill)}
-                      onCheckedChange={() => toggleSkill(skill)}
-                    />
-                    <span className="text-xs">{skill}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-2 mt-4 border-t border-border pt-4">
-            <Button
-              variant="outline"
-              onClick={handleClearFilters}
-              className="flex-1"
-            >
-              Clear
-            </Button>
-            <Button onClick={handleApplyFilters} className="flex-1">
-              Apply
-            </Button>
+  const filterContent = (
+    <>
+      <div className="flex-1 space-y-6 py-4">
+        {/* Budget Range */}
+        <div>
+          <Label className="text-sm font-medium">Budget Range</Label>
+          <div className="flex gap-2 mt-2">
+            <Input
+              type="number"
+              placeholder="Min"
+              value={filters.budgetMin || ''}
+              onChange={(e) => handleBudgetMinChange(e.target.value)}
+              className="w-full"
+            />
+            <Input
+              type="number"
+              placeholder="Max"
+              value={filters.budgetMax || ''}
+              onChange={(e) => handleBudgetMaxChange(e.target.value)}
+              className="w-full"
+            />
           </div>
         </div>
-      )}
-    </div>
+
+        {/* Status */}
+        <div>
+          <Label className="text-sm font-medium">Status</Label>
+          <Select value={filters.status || ''} onValueChange={handleStatusChange}>
+            <SelectTrigger className="mt-2">
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Date Range */}
+        <div>
+          <Label className="text-sm font-medium">Posted</Label>
+          <Select value={filters.dateRange || 'all'} onValueChange={handleDateRangeChange}>
+            <SelectTrigger className="mt-2">
+              <SelectValue placeholder="Select date range" />
+            </SelectTrigger>
+            <SelectContent>
+              {DATE_RANGE_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Bid Count Range */}
+        <div>
+          <Label className="text-sm font-medium">Bid Count</Label>
+          <div className="flex gap-2 mt-2">
+            <Input
+              type="number"
+              placeholder="Min"
+              value={filters.bidCountMin || ''}
+              onChange={(e) => handleBidCountMinChange(e.target.value)}
+              className="w-full"
+            />
+            <Input
+              type="number"
+              placeholder="Max"
+              value={filters.bidCountMax || ''}
+              onChange={(e) => handleBidCountMaxChange(e.target.value)}
+              className="w-full"
+            />
+          </div>
+        </div>
+
+        {/* Rating */}
+        <div>
+          <Label className="text-sm font-medium">Min Rating</Label>
+          <Input
+            type="number"
+            placeholder="e.g., 4.5"
+            min="0"
+            max="5"
+            step="0.1"
+            value={filters.rating || ''}
+            onChange={(e) => handleRatingChange(e.target.value)}
+            className="mt-2"
+          />
+        </div>
+
+        {/* Skills */}
+        <div>
+          <Label className="text-sm font-medium">Skills</Label>
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            {SKILL_OPTIONS.map((skill) => (
+              <label key={skill} className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={selectedSkills.includes(skill)}
+                  onCheckedChange={() => toggleSkill(skill)}
+                />
+                <span className="text-xs">{skill}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-auto border-t border-border pt-6 flex w-full gap-3">
+        <Button
+          variant="outline"
+          onClick={handleClearFilters}
+          className="flex-1"
+        >
+          Clear
+        </Button>
+        <Button onClick={handleApplyFilters} className="flex-1 shadow-md hover:shadow-lg transition-shadow">
+          Apply Filters
+        </Button>
+      </div>
+    </>
+  );
+
+  if (inline) {
+    return (
+      <div className="bg-card border border-border/50 rounded-xl p-5 sticky top-6 shadow-sm hidden lg:block">
+        <h3 className="font-semibold text-lg mb-2">Filters</h3>
+        {filterContent}
+      </div>
+    );
+  }
+
+  return (
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant="outline"
+          className="gap-2 lg:hidden"
+        >
+          <ChevronDown className="h-4 w-4" />
+          Filters
+          {activeFilterCount > 0 && (
+            <span className="ml-2 inline-flex items-center rounded-full bg-primary px-2.5 py-0.5 text-xs font-medium text-primary-foreground">
+              {activeFilterCount}
+            </span>
+          )}
+        </Button>
+      </SheetTrigger>
+
+      <SheetContent side="right" className="w-[100vw] sm:max-w-md overflow-y-auto flex flex-col p-6">
+        <SheetHeader>
+          <SheetTitle>Advanced Filters</SheetTitle>
+          <SheetDescription>
+            Refine your project search with specific criteria.
+          </SheetDescription>
+        </SheetHeader>
+        {filterContent}
+      </SheetContent>
+    </Sheet>
   );
 }

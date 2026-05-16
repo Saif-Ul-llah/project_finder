@@ -114,34 +114,44 @@ function JobsPageContent() {
           </p>
         </div>
 
-        {/* Search and Filters Bar */}
-        <div className="flex flex-col gap-4 mb-8">
+        {/* Search Bar (Full Width) */}
+        <div className="mb-8">
           <SearchBar 
             placeholder="Search jobs..." 
             onSearch={handleSearch}
             defaultValue={search}
           />
-          
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-            <div className="flex gap-3 flex-wrap">
-              <AdvancedFilters 
-                onFiltersChange={handleFiltersChange}
-              />
-            </div>
-            
-            <SortingSelect 
-              value={sortBy}
-              onSortChange={handleSortChange}
-            />
-          </div>
         </div>
 
-        {/* Results Count */}
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Showing <span className="font-semibold text-foreground">{paginatedProjects.length}</span> of <span className="font-semibold text-foreground">{filteredProjects.length}</span> jobs
-          </p>
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar Filters (Desktop) */}
+          <div className="hidden lg:block lg:col-span-1 relative">
+            <AdvancedFilters 
+              onFiltersChange={handleFiltersChange}
+              inline={true}
+            />
+          </div>
+
+          {/* Main Listings Area */}
+          <div className="lg:col-span-3 flex flex-col">
+            {/* Mobile Filters & Sorting Row */}
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between mb-6">
+              <div className="lg:hidden flex gap-3 flex-wrap">
+                <AdvancedFilters 
+                  onFiltersChange={handleFiltersChange}
+                />
+              </div>
+
+              <div className="flex items-center justify-between w-full lg:w-auto">
+                <p className="text-sm text-muted-foreground mr-4">
+                  <span className="font-semibold text-foreground">{filteredProjects.length}</span> jobs found
+                </p>
+                <SortingSelect 
+                  value={sortBy}
+                  onSortChange={handleSortChange}
+                />
+              </div>
+            </div>
 
         {/* Error State */}
         {error && (
@@ -159,10 +169,10 @@ function JobsPageContent() {
           </div>
         )}
 
-        {/* Jobs Grid */}
+        {/* Jobs List View */}
         {!loading && paginatedProjects.length > 0 && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <div className="flex flex-col gap-5 mb-8">
               {paginatedProjects.map((project) => (
                 <FreelancerProjectCard key={project.id} project={project} />
               ))}
@@ -181,14 +191,23 @@ function JobsPageContent() {
 
         {/* Empty State */}
         {!loading && paginatedProjects.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="flex flex-col items-center justify-center py-16 bg-card border border-border/50 rounded-xl text-center">
             <div className="text-6xl mb-4">💼</div>
             <h3 className="text-lg font-semibold text-foreground mb-2">No jobs found</h3>
-            <p className="text-muted-foreground mb-4">
-              Try adjusting your filters or search terms
+            <p className="text-muted-foreground mb-4 max-w-md">
+              We couldn't find any jobs matching your criteria. Try adjusting your filters or search terms.
             </p>
+            <button onClick={() => {
+              const params = new URLSearchParams(searchParams);
+              params.delete('search');
+              window.history.replaceState(null, '', `?${params.toString()}`);
+            }} className="text-primary hover:underline font-medium">
+              Clear all filters
+            </button>
           </div>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );
