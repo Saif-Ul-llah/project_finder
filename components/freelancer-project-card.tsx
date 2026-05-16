@@ -42,6 +42,19 @@ export function FreelancerProjectCard({ project }: ProjectCardProps) {
     }
   }
 
+  const getProjectUrl = () => {
+    let url = project.seo_url.startsWith('/') ? project.seo_url.substring(1) : project.seo_url;
+    
+    if (project.budget?.project_type === 'contest') {
+      // Contests don't need /details
+      return `https://www.freelancer.com/${url}`;
+    } else {
+      // Projects need /details and often have .html that should be removed
+      const cleanUrl = url.replace(/\.html$/, '');
+      return `https://www.freelancer.com/${cleanUrl}/details`;
+    }
+  };
+
   return (
     <div className="group relative overflow-hidden border border-border/50 rounded-xl p-5 sm:p-6 bg-card hover:shadow-xl hover:-translate-y-1 hover:border-primary/50 transition-all duration-300">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
@@ -96,7 +109,7 @@ export function FreelancerProjectCard({ project }: ProjectCardProps) {
           <div className="flex justify-between items-start gap-4">
             <h3 className="font-semibold text-lg sm:text-xl text-foreground line-clamp-2 group-hover:text-primary transition-colors pr-4 flex-1">
               <a 
-                href={`https://www.freelancer.com/${project.seo_url.startsWith('/') ? project.seo_url.substring(1) : project.seo_url}`}
+                href={getProjectUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:underline"
@@ -181,7 +194,7 @@ export function FreelancerProjectCard({ project }: ProjectCardProps) {
           </div>
 
           <a 
-            href={`https://www.freelancer.com/${project.seo_url.startsWith('/') ? project.seo_url.substring(1) : project.seo_url}`}
+            href={getProjectUrl()}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-auto w-full inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 shadow-sm"
