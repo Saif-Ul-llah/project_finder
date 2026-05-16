@@ -43,15 +43,20 @@ export function FreelancerProjectCard({ project }: ProjectCardProps) {
   }
 
   const getProjectUrl = () => {
+    if (!project.seo_url) return '#';
     let url = project.seo_url.startsWith('/') ? project.seo_url.substring(1) : project.seo_url;
     
-    if (project.budget?.project_type === 'contest') {
+    const isContest = url.includes('/contest/') || url.startsWith('contest/');
+    
+    if (isContest) {
       // Contests don't need /details
       return `https://www.freelancer.com/${url}`;
     } else {
       // Projects need /details and often have .html that should be removed
       const cleanUrl = url.replace(/\.html$/, '');
-      return `https://www.freelancer.com/${cleanUrl}/details`;
+      // Ensure we don't double up /details
+      const finalUrl = cleanUrl.endsWith('/details') ? cleanUrl : `${cleanUrl}/details`;
+      return `https://www.freelancer.com/${finalUrl}`;
     }
   };
 
