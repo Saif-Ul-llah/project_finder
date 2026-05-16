@@ -22,3 +22,4 @@ node_modules
 next-env.d.ts    
 node_modules_electron
 node_modules_electron
+config.bat
