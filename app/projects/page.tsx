@@ -7,7 +7,7 @@ import { AdvancedFilters, FilterState } from '@/components/advanced-filters';
 import { SortingSelect } from '@/components/sorting-select';
 import { Pagination } from '@/components/pagination';
 import { FreelancerProjectCard } from '@/components/freelancer-project-card';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Project } from '@/lib/types';
 import { fetchContests, filterBySearch, filterByBudget, sortItems } from '@/lib/api';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -22,6 +22,7 @@ function ProjectsPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Get filters from URL
   const search = searchParams.get('search') || '';
@@ -59,7 +60,11 @@ function ProjectsPageContent() {
     };
 
     loadContests();
-  }, [page, budgetMin, budgetMax, sortBy]);
+  }, [page, budgetMin, budgetMax, sortBy, refreshKey]);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshKey(prev => prev + 1);
+  }, []);
 
   // Apply client-side filtering
   useEffect(() => {
@@ -189,10 +194,19 @@ function ProjectsPageContent() {
                 />
               </div>
 
-              <div className="flex items-center justify-between w-full lg:w-auto">
-                <p className="text-sm text-muted-foreground mr-4">
+              <div className="flex items-center justify-between w-full lg:w-auto gap-3">
+                <p className="text-sm text-muted-foreground mr-2">
                   <span className="font-semibold text-foreground">{totalResults}</span> projects found
                 </p>
+                <button
+                  onClick={handleRefresh}
+                  disabled={loading}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-border/50 bg-card hover:bg-accent px-3 h-10 text-sm font-medium text-muted-foreground hover:text-foreground transition-all disabled:opacity-50 shadow-sm"
+                  title="Refresh results"
+                >
+                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">Refresh</span>
+                </button>
                 <SortingSelect
                   value={sortBy}
                   onSortChange={handleSortChange}
