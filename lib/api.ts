@@ -10,9 +10,9 @@ import {
 // Configure your API endpoints here
 const API_CONFIG = {
   contests: process.env.NEXT_PUBLIC_CONTESTS_API_URL || 
-    'https://www.freelancer.com/ajax/table/project_contest_datatable.php',
+    '/api/freelancer/ajax/table/project_contest_datatable.php',
   projects: process.env.NEXT_PUBLIC_PROJECTS_API_URL || 
-    'https://www.freelancer.com/api/projects/0.1/projects/active',
+    '/api/freelancer/api/projects/0.1/projects/active',
 };
 
 interface FetchOptions extends RequestInit {
