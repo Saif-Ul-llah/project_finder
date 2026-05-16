@@ -1,232 +1,234 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Metadata } from 'next';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { SearchBar } from '@/components/search-bar';
 import { AdvancedFilters, FilterState } from '@/components/advanced-filters';
 import { SortingSelect } from '@/components/sorting-select';
-import { ProjectCard } from '@/components/project-card';
 import { Pagination } from '@/components/pagination';
-import { mockProjects } from '@/lib/api';
-import { Project } from '@/lib/types';
-import { useQueryParams } from '@/hooks/use-query-params';
-import { Loader2 } from 'lucide-react';
+import { ContestCard } from '@/components/contest-card';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { ContestProject } from '@/lib/types';
+import { fetchContests, filterBySearch, filterByBudget, sortItems } from '@/lib/api';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const ITEMS_PER_PAGE = 12;
 
-export default function ProjectsPage() {
-  const { updateQueryParams, getParam, getNumericParam } = useQueryParams();
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
-  const [filteredProjects, setFilteredProjects] = useState<Project[]>(mockProjects);
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(getNumericParam('page', 1));
+function ProjectsPageContent() {
+  const searchParams = useSearchParams();
+  const [contests, setContests] = useState<ContestProject[]>([]);
+  const [filteredContests, setFilteredContests] = useState<ContestProject[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
 
-  // Get current filters from URL
-  const searchQuery = getParam('search', '');
-  const budgetMin = getNumericParam('budgetMin', 0);
-  const budgetMax = getNumericParam('budgetMax', 100000);
-  const status = getParam('status', '');
-  const sortBy = getParam('sortBy', 'posted_date');
-  const sortOrder = (getParam('sortOrder', 'desc') as 'asc' | 'desc');
+  // Get filters from URL
+  const search = searchParams.get('search') || '';
+  const budgetMin = searchParams.get('budgetMin') ? parseInt(searchParams.get('budgetMin')!) : undefined;
+  const budgetMax = searchParams.get('budgetMax') ? parseInt(searchParams.get('budgetMax')!) : undefined;
+  const sortBy = searchParams.get('sortBy') || 'newest';
+  const page = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
 
-  // Apply filters and sorting
+  // Load contests from API
   useEffect(() => {
-    let result = [...projects];
+    const loadContests = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const result = await fetchContests({
+          page: Math.max(0, page - 1),
+          limit: ITEMS_PER_PAGE,
+          budgetMin,
+          budgetMax,
+          sortBy,
+        });
 
-    // Search
-    if (searchQuery) {
-      result = result.filter(
-        (p) =>
-          p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+        setContests(result.data);
+        setTotalResults(result.totalDisplay);
+        setCurrentPage(page);
+      } catch (err) {
+        console.error('[v0] Error loading contests:', err);
+        setError('Failed to load projects. Please try again.');
+        setContests([]);
+        setTotalResults(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadContests();
+  }, [page, budgetMin, budgetMax, sortBy]);
+
+  // Apply client-side filtering
+  useEffect(() => {
+    let results = contests;
+
+    // Search filter
+    if (search) {
+      results = filterBySearch(results, search);
     }
 
     // Budget filter
-    if (budgetMin > 0 || budgetMax < 100000) {
-      result = result.filter((p) => {
-        const projectBudget = p.budget || 0;
-        return projectBudget >= budgetMin && projectBudget <= budgetMax;
-      });
+    if (budgetMin || budgetMax) {
+      results = filterByBudget(results, budgetMin, budgetMax);
     }
 
-    // Status filter
-    if (status) {
-      result = result.filter((p) => p.status === status);
+    // Sort
+    if (sortBy) {
+      results = sortItems(results, sortBy, 'desc');
     }
 
-    // Sorting
-    result.sort((a, b) => {
-      let aValue, bValue;
+    setFilteredContests(results);
+  }, [contests, search, budgetMin, budgetMax, sortBy]);
 
-      switch (sortBy) {
-        case 'budget':
-          aValue = a.budget || 0;
-          bValue = b.budget || 0;
-          break;
-        case 'bidCount':
-          aValue = a.bidCount || 0;
-          bValue = b.bidCount || 0;
-          break;
-        case 'rating':
-          aValue = a.rating || 0;
-          bValue = b.rating || 0;
-          break;
-        case 'posted_date':
-        default:
-          aValue = a.posted_date ? new Date(a.posted_date).getTime() : 0;
-          bValue = b.posted_date ? new Date(b.posted_date).getTime() : 0;
-          break;
-      }
+  const handleSearch = useCallback((query: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (query) {
+      params.set('search', query);
+    } else {
+      params.delete('search');
+    }
+    params.set('page', '1');
+    window.history.replaceState(null, '', `?${params.toString()}`);
+  }, [searchParams]);
 
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      }
-      return aValue < bValue ? 1 : -1;
-    });
+  const handleFiltersChange = useCallback((filters: FilterState) => {
+    const params = new URLSearchParams(searchParams);
+    
+    if (filters.budgetMin) {
+      params.set('budgetMin', filters.budgetMin.toString());
+    } else {
+      params.delete('budgetMin');
+    }
 
-    setFilteredProjects(result);
-    setCurrentPage(1);
-  }, [projects, searchQuery, budgetMin, budgetMax, status, sortBy, sortOrder]);
+    if (filters.budgetMax) {
+      params.set('budgetMax', filters.budgetMax.toString());
+    } else {
+      params.delete('budgetMax');
+    }
 
-  // Handle search
-  const handleSearch = (query: string) => {
-    updateQueryParams({ search: query, page: undefined });
-  };
+    params.set('page', '1');
+    window.history.replaceState(null, '', `?${params.toString()}`);
+  }, [searchParams]);
 
-  // Handle filters
-  const handleFiltersChange = (filters: FilterState) => {
-    updateQueryParams({
-      budgetMin: filters.budgetMin || undefined,
-      budgetMax: filters.budgetMax || undefined,
-      status: filters.status || undefined,
-      page: undefined,
-    });
-  };
+  const handleSortChange = useCallback((value: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('sortBy', value);
+    params.set('page', '1');
+    window.history.replaceState(null, '', `?${params.toString()}`);
+  }, [searchParams]);
 
-  // Handle sort
-  const handleSort = (field: string, order: 'asc' | 'desc') => {
-    updateQueryParams({
-      sortBy: field,
-      sortOrder: order,
-      page: undefined,
-    });
-  };
-
-  // Handle pagination
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    updateQueryParams({ page: page > 1 ? page : undefined });
+  const handlePageChange = useCallback((newPage: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', newPage.toString());
+    window.history.replaceState(null, '', `?${params.toString()}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, [searchParams]);
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredProjects.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredContests.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedProjects = filteredProjects.slice(
-    startIndex,
-    startIndex + ITEMS_PER_PAGE
-  );
+  const paginatedContests = filteredContests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border sticky top-0 z-40 bg-card">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Projects</h1>
-              <p className="text-muted-foreground mt-1">
-                Browse and find your next project
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search and Filters Section */}
-        <div className="mb-8 space-y-4">
-          <SearchBar
-            onSearch={handleSearch}
-            defaultValue={searchQuery || ''}
-            placeholder="Search projects by title or skills..."
-          />
-
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-2">
-              <AdvancedFilters onFiltersChange={handleFiltersChange} />
-            </div>
-            <SortingSelect onSortChange={handleSort} />
-          </div>
-
-          {/* Active filters display */}
-          {(searchQuery || budgetMin > 0 || budgetMax < 100000 || status) && (
-            <div className="flex flex-wrap gap-2 text-sm">
-              <span className="text-muted-foreground">Active filters:</span>
-              {searchQuery && (
-                <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1">
-                  Search: {searchQuery}
-                </span>
-              )}
-              {(budgetMin > 0 || budgetMax < 100000) && (
-                <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1">
-                  Budget: ${budgetMin} - ${budgetMax}
-                </span>
-              )}
-              {status && (
-                <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1">
-                  Status: {status}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Results count */}
-        <div className="mb-6">
-          <p className="text-sm text-muted-foreground">
-            Found <span className="font-semibold">{filteredProjects.length}</span> project
-            {filteredProjects.length !== 1 ? 's' : ''}
+      <div className="container mx-auto px-4 py-6 sm:py-10">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
+            Freelance Projects & Contests
+          </h1>
+          <p className="text-muted-foreground">
+            Browse thousands of projects from clients around the world
           </p>
         </div>
 
-        {/* Cards Grid */}
-        {isLoading ? (
-          <div className="flex h-96 items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        {/* Search and Filters Bar */}
+        <div className="flex flex-col gap-4 mb-8">
+          <SearchBar 
+            placeholder="Search projects..." 
+            onSearch={handleSearch}
+            defaultValue={search}
+          />
+          
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+            <div className="flex gap-3 flex-wrap">
+              <AdvancedFilters 
+                onFiltersChange={handleFiltersChange}
+                initialFilters={{ budgetMin, budgetMax }}
+              />
+            </div>
+            
+            <SortingSelect 
+              value={sortBy}
+              onSortChange={handleSortChange}
+            />
           </div>
-        ) : paginatedProjects.length > 0 ? (
+        </div>
+
+        {/* Results Count */}
+        <div className="mb-6 flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing <span className="font-semibold text-foreground">{paginatedContests.length}</span> of <span className="font-semibold text-foreground">{filteredContests.length}</span> projects
+          </p>
+        </div>
+
+        {/* Error State */}
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Loading projects...</p>
+          </div>
+        )}
+
+        {/* Projects Grid */}
+        {!loading && paginatedContests.length > 0 && (
           <>
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-              {paginatedProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+              {paginatedContests.map((contest) => (
+                <ContestCard key={contest.project_id} contest={contest} />
               ))}
             </div>
 
             {/* Pagination */}
-            <div className="mt-8">
+            {totalPages > 1 && (
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={handlePageChange}
-                totalItems={filteredProjects.length}
-                itemsPerPage={ITEMS_PER_PAGE}
               />
-            </div>
+            )}
           </>
-        ) : (
-          <div className="flex h-96 flex-col items-center justify-center rounded-lg border border-dashed border-border">
-            <p className="text-lg font-semibold text-foreground">
-              No projects found
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Try adjusting your filters or search query
+        )}
+
+        {/* Empty State */}
+        {!loading && paginatedContests.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="text-6xl mb-4">🔍</div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">No projects found</h3>
+            <p className="text-muted-foreground mb-4">
+              Try adjusting your filters or search terms
             </p>
           </div>
         )}
-      </main>
+      </div>
     </div>
+  );
+}
+
+export default function ProjectsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="animate-spin" /></div>}>
+      <ProjectsPageContent />
+    </Suspense>
   );
 }

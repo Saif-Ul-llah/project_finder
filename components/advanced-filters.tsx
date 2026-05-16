@@ -31,24 +31,30 @@ export interface FilterState {
 }
 
 const SKILL_OPTIONS = [
-  'React',
-  'Node.js',
-  'Python',
-  'JavaScript',
-  'TypeScript',
-  'MongoDB',
-  'PostgreSQL',
+  'PHP',
+  'MySQL',
+  'HTML',
+  'Software Development',
+  'Laravel',
+  'Web Development',
+  'Backend Development',
+  'Database Management',
+  'API Development',
+  'Logo Design',
+  'Graphic Design',
   'UI Design',
   'UX Design',
   'Figma',
+  'Branding',
   'WordPress',
-  'PHP',
-  'CSS',
-  'Vue.js',
-  'Angular',
+  'JavaScript',
+  'React',
+  'Node.js',
+  'Python',
+  'TypeScript',
 ];
 
-const STATUS_OPTIONS = ['open', 'closed', 'draft', 'featured', 'urgent', 'hourly'];
+const STATUS_OPTIONS = ['all', 'open', 'active', 'featured', 'urgent', 'sealed', 'guaranteed'];
 
 const DATE_RANGE_OPTIONS = [
   { label: 'Last 24 hours', value: '24h' },

@@ -1,9 +1,18 @@
-import { Project, Job, ApiResponse, FilterOptions } from './types';
+import { 
+  Project, 
+  ContestProject,
+  ProjectsResponse,
+  ContestProjectsResponse,
+  FilterOptions,
+  JobCategory 
+} from './types';
 
 // Configure your API endpoints here
 const API_CONFIG = {
-  projects: process.env.NEXT_PUBLIC_PROJECTS_API_URL || '/api/projects',
-  jobs: process.env.NEXT_PUBLIC_JOBS_API_URL || '/api/jobs',
+  contests: process.env.NEXT_PUBLIC_CONTESTS_API_URL || 
+    'https://www.freelancer.com/ajax/table/project_contest_datatable.php',
+  projects: process.env.NEXT_PUBLIC_PROJECTS_API_URL || 
+    'https://www.freelancer.com/api/projects/0.1/projects/active',
 };
 
 interface FetchOptions extends RequestInit {
@@ -16,14 +25,13 @@ async function fetchApi<T>(
 ): Promise<T> {
   const { params, ...fetchOptions } = options;
 
-  // Build query string
   let url = endpoint;
   if (params) {
     const queryString = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== false) {
         if (Array.isArray(value)) {
-          value.forEach(v => queryString.append(key, v));
+          value.forEach(v => queryString.append(key, String(v)));
         } else {
           queryString.append(key, String(value));
         }
@@ -33,28 +41,33 @@ async function fetchApi<T>(
     if (qs) url += `?${qs}`;
   }
 
-  const response = await fetch(url, {
-    ...fetchOptions,
-    headers: {
-      'Content-Type': 'application/json',
-      ...fetchOptions.headers,
-    },
-  });
+  try {
+    const response = await fetch(url, {
+      ...fetchOptions,
+      headers: {
+        'Content-Type': 'application/json',
+        ...fetchOptions.headers,
+      },
+    });
 
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.statusText}`);
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('[API Error]', error);
+    throw error;
   }
-
-  return response.json();
 }
 
-// Project/Freelancer API methods
-export async function fetchProjects(
+// Fetch Contests/Projects
+export async function fetchContests(
   filters: FilterOptions & { page?: number; limit?: number }
-): Promise<ApiResponse<Project>> {
+): Promise<{ data: ContestProject[]; total: number; totalDisplay: number }> {
   const params = {
     tag: 'users',
-    type: filters.status === 'hourly' ? true : false,
+    type: false,
     budget_min: filters.budgetMin || false,
     budget_max: filters.budgetMax || false,
     contest_budget_min: false,
@@ -73,31 +86,34 @@ export async function fetchProjects(
     iDisplayLength: filters.limit || 20,
     iSortingCols: 1,
     iSortCol_0: 6,
-    sSortDir_0: filters.sortOrder || 'desc',
+    sSortDir_0: filters.sortOrder === 'asc' ? 'asc' : 'desc',
     format_version: 3,
     disableHighlights: true,
-    search: filters.search || undefined,
   };
 
   try {
-    const response = await fetchApi<ApiResponse<Project>>(
-      API_CONFIG.projects,
+    const response = await fetchApi<ContestProjectsResponse>(
+      API_CONFIG.contests,
       { params }
     );
-    return response;
+    return {
+      data: response.aaData || [],
+      total: response.iTotalRecords,
+      totalDisplay: response.iTotalDisplayRecords,
+    };
   } catch (error) {
-    console.error('Error fetching projects:', error);
-    return { data: [], success: false };
+    console.error('Error fetching contests:', error);
+    return { data: [], total: 0, totalDisplay: 0 };
   }
 }
 
-// Job/Contest API methods
-export async function fetchJobs(
+// Fetch Projects/Jobs
+export async function fetchProjects(
   filters: FilterOptions & { page?: number; limit?: number }
-): Promise<ApiResponse<Job>> {
+): Promise<{ data: Project[]; total: number }> {
   const jobIds = [9, 31, 68, 116, 305, 500, 564, 607, 613, 709, 759, 1031, 1084, 1087, 1092, 1093, 2164, 2165, 2703, 2839];
 
-  const params = {
+  const params: Record<string, any> = {
     limit: filters.limit || 20,
     full_description: true,
     job_details: true,
@@ -105,26 +121,138 @@ export async function fetchJobs(
     location_details: true,
     upgrade_details: true,
     owner_info: true,
-    'jobs[]': jobIds,
-    'languages[]': ['en'],
-    sort_field: filters.sortBy || 'submitdate',
     webapp: 1,
     compact: true,
     new_errors: true,
     new_pools: true,
-    search: filters.search || undefined,
   };
 
+  // Add job IDs
+  jobIds.forEach(id => {
+    params[`jobs[${jobIds.indexOf(id)}]`] = id;
+  });
+
+  // Add language
+  params['languages[0]'] = 'en';
+
+  // Add sorting
+  if (filters.sortBy) {
+    params['sort_field'] = filters.sortBy;
+  } else {
+    params['sort_field'] = 'submitdate';
+  }
+
   try {
-    const response = await fetchApi<ApiResponse<Job>>(
-      API_CONFIG.jobs,
+    const response = await fetchApi<ProjectsResponse>(
+      API_CONFIG.projects,
       { params }
     );
-    return response;
+    return {
+      data: response.result?.projects || [],
+      total: response.result?.projects?.length || 0,
+    };
   } catch (error) {
-    console.error('Error fetching jobs:', error);
-    return { data: [], success: false };
+    console.error('Error fetching projects:', error);
+    return { data: [], total: 0 };
   }
+}
+
+// Filter projects by search term
+export function filterBySearch(
+  items: ContestProject[] | Project[], 
+  search: string
+): ContestProject[] | Project[] {
+  if (!search.trim()) return items;
+  
+  const query = search.toLowerCase();
+  return items.filter(item => {
+    if ('project_name' in item) {
+      return (
+        item.project_name.toLowerCase().includes(query) ||
+        item.project_desc.toLowerCase().includes(query)
+      );
+    } else {
+      return (
+        item.title.toLowerCase().includes(query) ||
+        item.description.toLowerCase().includes(query)
+      );
+    }
+  });
+}
+
+// Filter by budget
+export function filterByBudget(
+  items: ContestProject[] | Project[],
+  minBudget?: number,
+  maxBudget?: number
+): ContestProject[] | Project[] {
+  if (!minBudget && !maxBudget) return items;
+
+  return items.filter(item => {
+    let itemBudget = 0;
+    if ('minbudget' in item) {
+      const budgetStr = item.minbudget?.replace(/[^0-9.]/g, '');
+      itemBudget = parseFloat(budgetStr) || 0;
+    } else if ('currency' in item) {
+      itemBudget = 0; // Projects API doesn't have direct budget in item
+    }
+
+    if (minBudget && itemBudget < minBudget) return false;
+    if (maxBudget && itemBudget > maxBudget) return false;
+    return true;
+  });
+}
+
+// Sort items
+export function sortItems(
+  items: ContestProject[] | Project[],
+  sortBy: string,
+  sortOrder: 'asc' | 'desc' = 'desc'
+): ContestProject[] | Project[] {
+  const sorted = [...items].sort((a, b) => {
+    let aVal: any = '';
+    let bVal: any = '';
+
+    if ('project_name' in a && 'project_name' in b) {
+      // Contest sorting
+      switch (sortBy) {
+        case 'bids':
+          aVal = a.bid_count;
+          bVal = b.bid_count;
+          break;
+        case 'budget':
+          aVal = parseFloat(a.minbudget?.replace(/[^0-9.]/g, '') || '0');
+          bVal = parseFloat(b.minbudget?.replace(/[^0-9.]/g, '') || '0');
+          break;
+        case 'newest':
+        default:
+          return 0; // Already sorted by API
+      }
+    } else {
+      // Project sorting
+      switch (sortBy) {
+        case 'bids':
+          aVal = 0;
+          bVal = 0;
+          break;
+        case 'budget':
+          aVal = 0;
+          bVal = 0;
+          break;
+        case 'newest':
+        default:
+          return 0;
+      }
+    }
+
+    if (typeof aVal === 'number' && typeof bVal === 'number') {
+      return sortOrder === 'desc' ? bVal - aVal : aVal - bVal;
+    }
+
+    return 0;
+  });
+
+  return sorted;
 }
 
 // Mock data for demo purposes
