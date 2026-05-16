@@ -16,6 +16,7 @@ interface SortingSelectProps {
 const SORT_OPTIONS = [
   { label: 'Newest First', value: 'newest' },
   { label: 'Most Bids', value: 'bids' },
+  { label: 'Lowest Bids', value: 'lowest_bids' },
   { label: 'Highest Budget', value: 'budget' },
   { label: 'Featured', value: 'featured' },
   { label: 'Guaranteed', value: 'guaranteed' },

@@ -13,6 +13,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import {
   Sheet,
   SheetContent,
@@ -71,6 +73,23 @@ const DATE_RANGE_OPTIONS = [
   { label: 'Last 7 days', value: '7d' },
   { label: 'Last 30 days', value: '30d' },
   { label: 'Any time', value: 'all' },
+];
+
+const COUNTRY_OPTIONS = [
+  { label: 'United States', value: 'US' },
+  { label: 'United Kingdom', value: 'GB' },
+  { label: 'Canada', value: 'CA' },
+  { label: 'Australia', value: 'AU' },
+  { label: 'Germany', value: 'DE' },
+  { label: 'India', value: 'IN' },
+  { label: 'Pakistan', value: 'PK' },
+];
+
+const LANGUAGE_OPTIONS = [
+  { label: 'English', value: 'en' },
+  { label: 'Spanish', value: 'es' },
+  { label: 'French', value: 'fr' },
+  { label: 'German', value: 'de' },
 ];
 
 export function AdvancedFilters({
@@ -237,18 +256,37 @@ export function AdvancedFilters({
           />
         </div>
 
+        {/* Country */}
+        <div>
+          <Label className="text-sm font-medium">Country</Label>
+          <Select value={filters.status || ''} onValueChange={handleStatusChange}>
+            <SelectTrigger className="mt-2">
+              <SelectValue placeholder="All Countries" />
+            </SelectTrigger>
+            <SelectContent>
+              {COUNTRY_OPTIONS.map((country) => (
+                <SelectItem key={country.value} value={country.value}>
+                  {country.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Skills */}
         <div>
           <Label className="text-sm font-medium">Skills</Label>
-          <div className="grid grid-cols-2 gap-2 mt-2">
+          <div className="flex flex-wrap gap-2 mt-2 max-h-[200px] overflow-y-auto p-1 border rounded-md">
             {SKILL_OPTIONS.map((skill) => (
-              <label key={skill} className="flex items-center gap-2 cursor-pointer">
-                <Checkbox
-                  checked={selectedSkills.includes(skill)}
-                  onCheckedChange={() => toggleSkill(skill)}
-                />
-                <span className="text-xs">{skill}</span>
-              </label>
+              <Badge
+                key={skill}
+                variant={selectedSkills.includes(skill) ? "default" : "outline"}
+                className="cursor-pointer transition-all"
+                onClick={() => toggleSkill(skill)}
+              >
+                {skill}
+                {selectedSkills.includes(skill) && <X className="ml-1 w-3 h-3" />}
+              </Badge>
             ))}
           </div>
         </div>
@@ -271,8 +309,11 @@ export function AdvancedFilters({
 
   if (inline) {
     return (
-      <div className="bg-card border border-border/50 rounded-xl p-5 sticky top-6 shadow-sm hidden lg:block">
-        <h3 className="font-semibold text-lg mb-2">Filters</h3>
+      <div className="bg-card border border-border/50 rounded-xl p-5 sticky top-24 shadow-sm hidden lg:flex flex-col max-h-[calc(100vh-120px)] overflow-y-auto no-scrollbar">
+        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+          <ChevronDown className="w-5 h-5 text-primary" />
+          Filters
+        </h3>
         {filterContent}
       </div>
     );

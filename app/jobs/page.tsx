@@ -18,6 +18,7 @@ function JobsPageContent() {
   const searchParams = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
+  const [totalProjectsCount, setTotalProjectsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,11 +37,12 @@ function JobsPageContent() {
         
         const result = await fetchProjects({
           page: Math.max(0, page - 1),
-          limit: ITEMS_PER_PAGE * 2,
+          limit: ITEMS_PER_PAGE,
           sortBy,
         });
 
         setProjects(result.data);
+        setTotalProjectsCount(result.total);
         setCurrentPage(page);
       } catch (err) {
         console.error('[v0] Error loading projects:', err);
@@ -97,9 +99,9 @@ function JobsPageContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [searchParams]);
 
-  const totalPages = Math.ceil(filteredProjects.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedProjects = filteredProjects.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  // Since the API paginates for us, we use the total count directly from the API.
+  const totalPages = Math.ceil(totalProjectsCount / ITEMS_PER_PAGE);
+  const paginatedProjects = filteredProjects; // API already paginated it
 
   return (
     <div className="min-h-screen bg-background">
@@ -121,6 +123,18 @@ function JobsPageContent() {
             onSearch={handleSearch}
             defaultValue={search}
           />
+          <div className="flex flex-wrap items-center gap-3 mt-4 text-sm">
+            <span className="text-muted-foreground font-medium">Trending:</span>
+            {['React', 'Node.js', 'Python', 'UI/UX', 'SEO', 'Content Writing'].map((tag) => (
+              <button
+                key={tag}
+                onClick={() => handleSearch(tag)}
+                className="text-primary hover:underline transition-all"
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -144,7 +158,7 @@ function JobsPageContent() {
 
               <div className="flex items-center justify-between w-full lg:w-auto">
                 <p className="text-sm text-muted-foreground mr-4">
-                  <span className="font-semibold text-foreground">{filteredProjects.length}</span> jobs found
+                  <span className="font-semibold text-foreground">{totalProjectsCount}</span> jobs found
                 </p>
                 <SortingSelect 
                   value={sortBy}

@@ -25,19 +25,23 @@ export function SearchBar({
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
-      <div className="relative flex items-center gap-2">
+      <div className="relative flex items-center gap-2 group">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <Input
             type="text"
             placeholder={placeholder}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="pl-10 pr-4"
+            className="pl-12 pr-4 h-14 text-lg bg-card border-border/50 shadow-sm focus-visible:ring-primary/20 focus-visible:border-primary transition-all rounded-xl"
           />
         </div>
-        <Button type="submit" className="gap-2">
-          <Search className="h-4 w-4" />
+        <Button 
+          type="submit" 
+          size="lg"
+          className="gap-2 h-14 px-8 rounded-xl shadow-md hover:shadow-lg transition-all"
+        >
+          <Search className="h-5 w-5" />
           Search
         </Button>
       </div>

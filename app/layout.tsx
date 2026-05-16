@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
+import { SiteHeader } from '@/components/site-header'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -36,8 +37,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased" suppressHydrationWarning>
-        {children}
+      <body className="font-sans antialiased min-h-screen flex flex-col" suppressHydrationWarning>
+        <SiteHeader />
+        <main className="flex-1 flex flex-col">
+          {children}
+        </main>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

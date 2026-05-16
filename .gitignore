@@ -14,3 +14,11 @@ next.user-config.*
 node_modules
 .next/
 .DS_Store
+pnpm-lock.yaml
+pnpm*
+
+node_modules_electron
+node_modules    
+next-env.d.ts    
+node_modules_electron
+node_modules_electron

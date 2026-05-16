@@ -6,9 +6,9 @@ import { SearchBar } from '@/components/search-bar';
 import { AdvancedFilters, FilterState } from '@/components/advanced-filters';
 import { SortingSelect } from '@/components/sorting-select';
 import { Pagination } from '@/components/pagination';
-import { ContestCard } from '@/components/contest-card';
+import { FreelancerProjectCard } from '@/components/freelancer-project-card';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { ContestProject } from '@/lib/types';
+import { Project } from '@/lib/types';
 import { fetchContests, filterBySearch, filterByBudget, sortItems } from '@/lib/api';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -16,8 +16,8 @@ const ITEMS_PER_PAGE = 12;
 
 function ProjectsPageContent() {
   const searchParams = useSearchParams();
-  const [contests, setContests] = useState<ContestProject[]>([]);
-  const [filteredContests, setFilteredContests] = useState<ContestProject[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,8 +45,8 @@ function ProjectsPageContent() {
           sortBy,
         });
 
-        setContests(result.data);
-        setTotalResults(result.totalDisplay);
+        setProjects(result.data);
+        setTotalResults(result.total);
         setCurrentPage(page);
       } catch (err) {
         console.error('[v0] Error loading contests:', err);
@@ -63,7 +63,7 @@ function ProjectsPageContent() {
 
   // Apply client-side filtering
   useEffect(() => {
-    let results: any = contests;
+    let results: any = projects;
 
     // Search filter
     if (search) {
@@ -80,8 +80,8 @@ function ProjectsPageContent() {
       results = sortItems(results, sortBy, 'desc');
     }
 
-    setFilteredContests(results);
-  }, [contests, search, budgetMin, budgetMax, sortBy]);
+    setFilteredProjects(results);
+  }, [projects, search, budgetMin, budgetMax, sortBy]);
 
   const handleSearch = useCallback((query: string) => {
     const params = new URLSearchParams(searchParams);
@@ -127,9 +127,9 @@ function ProjectsPageContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [searchParams]);
 
-  const totalPages = Math.ceil(filteredContests.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedContests = filteredContests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  // Since the API paginates for us, we use the total count directly from the API.
+  const totalPages = Math.ceil(totalResults / ITEMS_PER_PAGE);
+  const paginatedProjects = filteredProjects;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -154,6 +154,18 @@ function ProjectsPageContent() {
             onSearch={handleSearch}
             defaultValue={search}
           />
+          <div className="flex flex-wrap items-center gap-3 mt-4 text-sm">
+            <span className="text-muted-foreground font-medium">Trending:</span>
+            {['Web Design', 'Logo Design', 'WordPress', 'Mobile App', 'Data Entry'].map((tag) => (
+              <button
+                key={tag}
+                onClick={() => handleSearch(tag)}
+                className="text-primary hover:underline transition-all"
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -179,7 +191,7 @@ function ProjectsPageContent() {
 
               <div className="flex items-center justify-between w-full lg:w-auto">
                 <p className="text-sm text-muted-foreground mr-4">
-                  <span className="font-semibold text-foreground">{filteredContests.length}</span> projects found
+                  <span className="font-semibold text-foreground">{totalResults}</span> projects found
                 </p>
                 <SortingSelect
                   value={sortBy}
@@ -205,11 +217,11 @@ function ProjectsPageContent() {
         )}
 
         {/* Projects List View */}
-        {!loading && paginatedContests.length > 0 && (
+        {!loading && paginatedProjects.length > 0 && (
           <>
             <div className="flex flex-col gap-5 mb-8">
-              {paginatedContests.map((contest) => (
-                <ContestCard key={contest.project_id} contest={contest} />
+              {paginatedProjects.map((project) => (
+                <FreelancerProjectCard key={project.id} project={project} />
               ))}
             </div>
 
@@ -225,7 +237,7 @@ function ProjectsPageContent() {
         )}
 
         {/* Empty State */}
-        {!loading && paginatedContests.length === 0 && (
+        {!loading && paginatedProjects.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 bg-card border border-border/50 rounded-xl text-center">
             <div className="text-6xl mb-4">🔍</div>
             <h3 className="text-lg font-semibold text-foreground mb-2">No projects found</h3>

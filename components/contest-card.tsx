@@ -2,7 +2,8 @@
 
 import { ContestProject } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
-import { Clock, FileText, Award, Shield, TrendingUp } from 'lucide-react';
+import { Clock, FileText, Award, Shield, TrendingUp, Heart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ContestCardProps {
   contest: ContestProject;
@@ -68,10 +69,33 @@ export function ContestCard({ contest }: ContestCardProps) {
             )}
           </div>
 
-          <h3 
-            className="font-semibold text-lg sm:text-xl text-foreground line-clamp-2 group-hover:text-primary transition-colors pr-4"
-            dangerouslySetInnerHTML={{ __html: contest.project_name }}
-          />
+          {/* Top Meta Data in Left Column */}
+          <div className="text-xs text-muted-foreground mb-3 flex flex-wrap items-center gap-2">
+            <span className="font-medium text-foreground flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5" />
+              Time Left: {contest.time_left}
+            </span>
+            {contest.bid_count > 0 && (
+              <>
+                <span className="text-border">•</span>
+                <span>Bids: {contest.bid_count}</span>
+              </>
+            )}
+            <span className="text-border">•</span>
+            <span className="font-medium text-foreground capitalize">
+              {contest.is_contest ? 'Contest' : 'Fixed-price'}
+            </span>
+          </div>
+
+          <div className="flex justify-between items-start gap-4">
+            <h3 
+              className="font-semibold text-lg sm:text-xl text-foreground line-clamp-2 group-hover:text-primary transition-colors pr-4 flex-1"
+              dangerouslySetInnerHTML={{ __html: contest.project_name }}
+            />
+            <Button variant="ghost" size="icon" className="rounded-full hover:bg-red-50 hover:text-red-500 transition-colors -mt-1 flex-shrink-0">
+              <Heart className="w-5 h-5" />
+            </Button>
+          </div>
 
           <div 
             className="text-sm text-muted-foreground line-clamp-3 my-3 [&>b]:font-semibold [&>br]:hidden leading-relaxed"

@@ -2,7 +2,8 @@
 
 import { Project } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Award, MapPin, Zap, TrendingUp, Clock } from 'lucide-react';
+import { Shield, Award, MapPin, Zap, TrendingUp, Clock, Heart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ProjectCardProps {
   project: Project;
@@ -21,21 +22,23 @@ export function FreelancerProjectCard({ project }: ProjectCardProps) {
     } else if (project.budget.minimum) {
       budgetDisplay = `${project.currency.sign}${project.budget.minimum}+`;
     }
-    if (project.budget.project_type === 'hourly') {
-      budgetDisplay += ' / hr';
-    }
   }
 
-  // Format date
-  let timeDisplay = 'Unknown';
-  if (project.submitdate) {
-    const date = new Date(project.submitdate * 1000);
+  // Format date correctly (sec, min, hour, day)
+  let timeDisplay = 'Unknown time';
+  if (project.time_submitted) {
+    const date = new Date(project.time_submitted * 1000);
     const now = new Date();
-    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    if (diffHours < 24) {
-      timeDisplay = `${diffHours} hours ago`;
+    const diffSecs = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffSecs < 60) {
+      timeDisplay = `${Math.max(1, diffSecs)} seconds ago`;
+    } else if (diffSecs < 3600) {
+      timeDisplay = `${Math.floor(diffSecs / 60)} minutes ago`;
+    } else if (diffSecs < 86400) {
+      timeDisplay = `${Math.floor(diffSecs / 3600)} hours ago`;
     } else {
-      timeDisplay = `${Math.floor(diffHours / 24)} days ago`;
+      timeDisplay = `${Math.floor(diffSecs / 86400)} days ago`;
     }
   }
 
@@ -48,6 +51,11 @@ export function FreelancerProjectCard({ project }: ProjectCardProps) {
         <div className="flex-1 flex flex-col min-w-0">
           {/* Status Badges */}
           <div className="flex flex-wrap gap-1.5 mb-3">
+            {project.time_submitted && (new Date().getTime() - project.time_submitted * 1000) < 3600000 && (
+              <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs rounded-full shadow-sm animate-pulse">
+                New
+              </Badge>
+            )}
             {upgrades?.featured && (
               <Badge variant="default" className="bg-amber-500 hover:bg-amber-600 text-white text-xs rounded-full shadow-sm">
                 Featured
@@ -72,9 +80,27 @@ export function FreelancerProjectCard({ project }: ProjectCardProps) {
             )}
           </div>
 
-          <h3 className="font-semibold text-lg sm:text-xl text-foreground line-clamp-2 group-hover:text-primary transition-colors pr-4">
-            {project.title}
-          </h3>
+          {/* Top Meta Data in Left Column */}
+          <div className="text-xs text-muted-foreground mb-3 flex flex-wrap items-center gap-2">
+            <span className="font-medium text-foreground">Posted {timeDisplay}</span>
+            {project.bid_stats && project.bid_stats.bid_count > 0 && (
+              <>
+                <span className="text-border">•</span>
+                <span>Proposals: {project.bid_stats.bid_count}</span>
+              </>
+            )}
+            <span className="text-border">•</span>
+            <span className="font-medium text-foreground capitalize">{project.budget?.project_type || 'Fixed-price'}</span>
+          </div>
+
+          <div className="flex justify-between items-start gap-4">
+            <h3 className="font-semibold text-lg sm:text-xl text-foreground line-clamp-2 group-hover:text-primary transition-colors pr-4 flex-1">
+              {project.title}
+            </h3>
+            <Button variant="ghost" size="icon" className="rounded-full hover:bg-red-50 hover:text-red-500 transition-colors -mt-1 flex-shrink-0">
+              <Heart className="w-5 h-5" />
+            </Button>
+          </div>
 
           <div 
             className="text-sm text-muted-foreground line-clamp-3 my-3 leading-relaxed"

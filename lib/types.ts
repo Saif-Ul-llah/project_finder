@@ -59,7 +59,7 @@ export interface Project {
     bid_count: number;
     bid_avg: number;
   };
-  submitdate?: number;
+  time_submitted?: number;
 }
 
 export interface Currency {
