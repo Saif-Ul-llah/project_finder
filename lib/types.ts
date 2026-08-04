@@ -78,6 +78,23 @@ export interface OpportunityFilters {
 // Filter catalog shape is platform-specific; kept loose.
 export type FilterCatalog = Record<string, unknown>;
 
+export interface Poller {
+  platform: string;
+  enabled: boolean;
+  interval_seconds: number;
+  limit: number;
+  last_run: string | null;
+  last_status: 'idle' | 'ok' | 'error';
+  last_message: string;
+  last_created: number;
+  last_updated: number;
+  last_skipped: number;
+}
+
+export interface SchedulerResponse {
+  pollers: Poller[];
+}
+
 export type SortOption =
   | 'newest'
   | 'oldest'

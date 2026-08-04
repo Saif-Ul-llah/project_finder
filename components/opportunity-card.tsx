@@ -30,17 +30,42 @@ function proposalsText(o: Opportunity): string {
   return '-';
 }
 
-function postedText(o: Opportunity): string {
-  const d = new Date(o.created_at);
-  const diff = Math.floor((Date.now() - d.getTime()) / 1000);
+// Resolve the real platform posting time from posted_raw, falling back to the
+// backend ingestion time (created_at) when the source has no post time.
+function resolvePosted(o: Opportunity): { date: Date | null; raw?: string } {
+  const raw = o.posted_raw?.trim();
+  if (raw) {
+    // Pure epoch seconds (Freelancer time_submitted).
+    if (/^\d{9,13}$/.test(raw)) {
+      const ms = raw.length > 10 ? Number(raw) : Number(raw) * 1000;
+      return { date: new Date(ms) };
+    }
+    // ISO / parseable date string (Upwork publishedOn).
+    const parsed = Date.parse(raw);
+    if (!Number.isNaN(parsed)) return { date: new Date(parsed) };
+    // Human string like "2 hours ago" — show as-is.
+    return { date: null, raw };
+  }
+  return { date: new Date(o.created_at) };
+}
+
+function relative(date: Date): string {
+  const diff = Math.floor((Date.now() - date.getTime()) / 1000);
   if (diff < 60) return 'just now';
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
+function postedText(o: Opportunity): string {
+  const { date, raw } = resolvePosted(o);
+  if (raw) return raw;
+  return date ? relative(date) : 'unknown';
+}
+
 export function OpportunityCard({ opportunity: o }: { opportunity: Opportunity }) {
-  const isNew = Date.now() - new Date(o.created_at).getTime() < 3600_000;
+  const postedDate = resolvePosted(o).date;
+  const isNew = postedDate != null && Date.now() - postedDate.getTime() < 3600_000;
 
   return (
     <div className="group relative overflow-hidden border border-border/50 rounded-xl p-5 sm:p-6 bg-card hover:shadow-xl hover:-translate-y-0.5 hover:border-primary/50 transition-all duration-300">

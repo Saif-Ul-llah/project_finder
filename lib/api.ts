@@ -6,8 +6,10 @@ import {
   FilterCatalog,
   OpportunitiesResponse,
   OpportunityFilters,
+  Poller,
   PullResult,
   PushResult,
+  SchedulerResponse,
   Stats,
 } from './types';
 
@@ -91,5 +93,19 @@ export function pushJob(job: Record<string, unknown>): Promise<PushResult> {
     method: 'POST',
     headers: { 'api-key': getApiKey() },
     body: JSON.stringify(job),
+  });
+}
+
+// ---- Scheduler / background pollers ----------------------------------------
+
+export function fetchScheduler(): Promise<SchedulerResponse> {
+  return request<SchedulerResponse>('/scheduler');
+}
+
+export function updatePoller(body: Partial<Poller> & { platform: string }): Promise<Poller> {
+  return request<Poller>('/scheduler', {
+    method: 'POST',
+    headers: { 'api-key': getApiKey() },
+    body: JSON.stringify(body),
   });
 }
