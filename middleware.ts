@@ -1,43 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { SESSION_COOKIE, expectedSessionToken } from '@/lib/auth';
 
-// Protects the /admin page with HTTP Basic Auth. Runs on the edge before the
-// page renders, so it is real server-side protection (not client-side hiding).
+// Gates /admin behind a login screen. Runs on the edge before the page renders.
+// The login page itself (/admin/login) is always allowed through.
 //
-// Credentials come from env vars (set these in Vercel):
-//   ADMIN_USER     (default "admin")
-//   ADMIN_PASSWORD (required to ENABLE the gate)
-//
-// If ADMIN_PASSWORD is unset, the gate is disabled (handy for local dev) — so
-// you MUST set ADMIN_PASSWORD in Vercel for protection to take effect.
+// Enable by setting ADMIN_PASSWORD (and ideally AUTH_SECRET) in Vercel. When
+// ADMIN_PASSWORD is unset, the gate is disabled (local dev).
 export const config = {
   matcher: ['/admin', '/admin/:path*'],
 };
 
-export function middleware(req: NextRequest) {
-  const password = process.env.ADMIN_PASSWORD;
-  if (!password) {
-    return NextResponse.next(); // protection disabled until configured
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // Always allow the login screen.
+  if (pathname === '/admin/login' || pathname.startsWith('/admin/login/')) {
+    return NextResponse.next();
   }
 
-  const user = process.env.ADMIN_USER || 'admin';
-  const header = req.headers.get('authorization');
-
-  if (header?.startsWith('Basic ')) {
-    try {
-      const decoded = atob(header.slice(6));
-      const sep = decoded.indexOf(':');
-      const u = decoded.slice(0, sep);
-      const p = decoded.slice(sep + 1);
-      if (u === user && p === password) {
-        return NextResponse.next();
-      }
-    } catch {
-      /* fall through to challenge */
-    }
+  const expected = await expectedSessionToken();
+  if (!expected) {
+    return NextResponse.next(); // auth not configured -> open
   }
 
-  return new NextResponse('Authentication required.', {
-    status: 401,
-    headers: { 'WWW-Authenticate': 'Basic realm="Admin", charset="UTF-8"' },
-  });
+  const session = req.cookies.get(SESSION_COOKIE)?.value;
+  if (session && session === expected) {
+    return NextResponse.next();
+  }
+
+  const url = req.nextUrl.clone();
+  url.pathname = '/admin/login';
+  url.searchParams.set('next', pathname);
+  return NextResponse.redirect(url);
 }

@@ -30,7 +30,9 @@ import {
   Save,
   RefreshCw,
   Database,
+  LogOut,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import {
   checkHealth,
   fetchStats,
@@ -44,6 +46,8 @@ import {
 import { Stats, PullResult, FilterCatalog, Poller } from '@/lib/types';
 
 export default function AdminPage() {
+  const router = useRouter();
+
   // Config
   const [apiKey, setApiKeyState] = useState('');
   const [savedKey, setSavedKey] = useState(false);
@@ -84,6 +88,16 @@ export default function AdminPage() {
     persistApiKey(apiKey);
     setSavedKey(true);
     setTimeout(() => setSavedKey(false), 2000);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      /* ignore */
+    }
+    router.replace('/admin/login');
+    router.refresh();
   };
 
   const handlePull = async () => {
@@ -150,6 +164,9 @@ export default function AdminPage() {
                 <XCircle className="w-3 h-3" /> Backend offline
               </Badge>
             )}
+            <Button variant="outline" size="sm" className="gap-2" onClick={handleLogout}>
+              <LogOut className="w-4 h-4" /> Log out
+            </Button>
           </div>
         </div>
 
