@@ -36,10 +36,12 @@ import {
   fetchStats,
   fetchFilters,
   triggerPull,
+  fetchScheduler,
+  updatePoller,
   getApiKey,
   setApiKey as persistApiKey,
 } from '@/lib/api';
-import { Stats, PullResult, FilterCatalog } from '@/lib/types';
+import { Stats, PullResult, FilterCatalog, Poller } from '@/lib/types';
 
 export default function AdminPage() {
   // Config
@@ -179,7 +181,10 @@ export default function AdminPage() {
           </Card>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Background pollers */}
+        <PollersCard />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           {/* API key config */}
           <Card>
             <CardHeader>
@@ -298,6 +303,143 @@ export default function AdminPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+function PollersCard() {
+  const [pollers, setPollers] = useState<Poller[]>([]);
+  const [drafts, setDrafts] = useState<Record<string, { interval: string; limit: string }>>({});
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetchScheduler();
+      setPollers(res.pollers);
+      setDrafts((prev) => {
+        const next = { ...prev };
+        res.pollers.forEach((p) => {
+          if (!next[p.platform]) {
+            next[p.platform] = { interval: String(p.interval_seconds), limit: String(p.limit) };
+          }
+        });
+        return next;
+      });
+    } catch {
+      /* backend may be offline */
+    }
+  }, []);
+
+  // Live status: refresh every 3s so you can watch pulls happen.
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 3000);
+    return () => clearInterval(t);
+  }, [load]);
+
+  const save = async (platform: string, patch: Record<string, unknown>) => {
+    setBusy(platform);
+    setErr(null);
+    try {
+      await updatePoller({ platform, ...patch });
+      await load();
+    } catch (e: any) {
+      setErr(e?.message || 'Update failed (check API key)');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const statusBadge = (p: Poller) => {
+    if (!p.enabled) return <Badge variant="outline">disabled</Badge>;
+    if (p.last_status === 'ok') return <Badge className="bg-emerald-500 text-white">running</Badge>;
+    if (p.last_status === 'error') return <Badge variant="destructive">error</Badge>;
+    return <Badge variant="secondary">pending</Badge>;
+  };
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle>Background Pollers (auto-sync)</CardTitle>
+        <CardDescription>
+          Enable a platform to auto-pull on an interval. Requires the{' '}
+          <code className="text-xs">run_scheduler</code> process to be running.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {err && (
+          <Alert variant="destructive">
+            <XCircle className="h-4 w-4" />
+            <AlertDescription>{err}</AlertDescription>
+          </Alert>
+        )}
+        {pollers.map((p) => {
+          const d = drafts[p.platform] || { interval: '', limit: '' };
+          return (
+            <div key={p.platform} className="rounded-lg border border-border/60 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold capitalize">{p.platform}</span>
+                  {statusBadge(p)}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor={`en-${p.platform}`} className="text-sm text-muted-foreground">
+                    {p.enabled ? 'On' : 'Off'}
+                  </Label>
+                  <Switch
+                    id={`en-${p.platform}`}
+                    checked={p.enabled}
+                    disabled={busy === p.platform}
+                    onCheckedChange={(v) => save(p.platform, { enabled: v })}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-wrap items-end gap-3">
+                <div>
+                  <Label className="text-xs">Interval (s)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={d.interval}
+                    onChange={(e) => setDrafts((s) => ({ ...s, [p.platform]: { ...d, interval: e.target.value } }))}
+                    className="mt-1 w-24 h-9"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Limit</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={d.limit}
+                    onChange={(e) => setDrafts((s) => ({ ...s, [p.platform]: { ...d, limit: e.target.value } }))}
+                    className="mt-1 w-24 h-9"
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy === p.platform}
+                  onClick={() => save(p.platform, { interval_seconds: Number(d.interval), limit: Number(d.limit) })}
+                >
+                  Apply
+                </Button>
+                <div className="text-xs text-muted-foreground ml-auto">
+                  {p.last_run ? (
+                    <>last run {new Date(p.last_run).toLocaleTimeString()} — {p.last_message}</>
+                  ) : (
+                    'not run yet'
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        <p className="text-xs text-muted-foreground">
+          ⚠️ Very short intervals (e.g. 5s) can get your IP rate-limited by the platforms and
+          rarely surface new jobs. 60s+ is recommended.
+        </p>
+      </CardContent>
+    </Card>
   );
 }
 
