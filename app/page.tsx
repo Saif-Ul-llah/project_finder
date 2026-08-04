@@ -10,13 +10,13 @@ export default function Home() {
       <nav className="border-b border-border sticky top-0 z-50 bg-card/80 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            <div className="text-2xl font-bold text-primary">Marketplace</div>
+            <div className="text-2xl font-bold text-primary">Project Finder</div>
             <div className="flex items-center gap-4">
               <Link href="/projects">
-                <Button variant="ghost">Projects</Button>
+                <Button variant="ghost">Opportunities</Button>
               </Link>
-              <Link href="/jobs">
-                <Button variant="ghost">Contests</Button>
+              <Link href="/admin">
+                <Button variant="ghost">Admin</Button>
               </Link>
             </div>
           </div>
@@ -36,13 +36,13 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
             <Link href="/projects">
               <Button size="lg" className="gap-2">
-                Browse Projects
+                Browse Opportunities
                 <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>
-            <Link href="/jobs">
+            <Link href="/admin">
               <Button size="lg" variant="outline" className="gap-2">
-                Explore Contests
+                Open Admin
                 <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>
@@ -128,9 +128,9 @@ export default function Home() {
                   Owner ratings visibility
                 </li>
               </ul>
-              <Link href="/jobs" className="inline-block">
+              <Link href="/admin" className="inline-block">
                 <Button size="sm" className="gap-2">
-                  Browse Contests
+                  Open Admin
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>

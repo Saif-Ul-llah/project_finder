@@ -15,12 +15,11 @@ interface SortingSelectProps {
 
 const SORT_OPTIONS = [
   { label: 'Newest First', value: 'newest' },
-  { label: 'Most Bids', value: 'bids' },
-  { label: 'Lowest Bids', value: 'lowest_bids' },
-  { label: 'Highest Budget', value: 'budget' },
-  { label: 'Featured', value: 'featured' },
-  { label: 'Guaranteed', value: 'guaranteed' },
-  { label: 'Urgent', value: 'urgent' },
+  { label: 'Oldest First', value: 'oldest' },
+  { label: 'Budget: High to Low', value: 'budget_high' },
+  { label: 'Budget: Low to High', value: 'budget_low' },
+  { label: 'Most Proposals', value: 'proposals' },
+  { label: 'Highest Rating', value: 'rating' },
 ];
 
 export function SortingSelect({

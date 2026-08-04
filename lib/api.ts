@@ -1,249 +1,95 @@
-import { 
-  Project, 
-  ContestProject,
-  ProjectsResponse,
-  ContestProjectsResponse,
-  FilterOptions,
-  JobCategory 
+// API client for the project_hunting_backend_python Django backend.
+// All requests go through the Next.js proxy (/api/backend/* -> Django /api/*)
+// so the browser stays same-origin (no CORS).
+
+import {
+  FilterCatalog,
+  OpportunitiesResponse,
+  OpportunityFilters,
+  PullResult,
+  PushResult,
+  Stats,
 } from './types';
 
-// Configure your API endpoints here
-const API_CONFIG = {
-  contests: process.env.NEXT_PUBLIC_CONTESTS_API_URL || 
-    '/api/freelancer/ajax/table/project_contest_datatable.php',
-  projects: process.env.NEXT_PUBLIC_PROJECTS_API_URL || 
-    '/api/freelancer/api/projects/0.1/projects/active',
-};
+const BASE = '/api/backend';
 
-interface FetchOptions extends RequestInit {
-  params?: Record<string, any>;
+// The ingestion api-key is required by the trigger/push endpoints. In the
+// admin UI it is stored in localStorage; this reads it at call time.
+export function getApiKey(): string {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('ingestion_api_key') || '';
 }
 
-async function fetchApi<T>(
-  endpoint: string,
-  options: FetchOptions = {}
-): Promise<T> {
-  const { params, ...fetchOptions } = options;
+export function setApiKey(key: string): void {
+  if (typeof window !== 'undefined') localStorage.setItem('ingestion_api_key', key);
+}
 
-  let url = endpoint;
-  if (params) {
-    const queryString = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== false) {
-        if (Array.isArray(value)) {
-          value.forEach(v => queryString.append(key, String(v)));
-        } else {
-          queryString.append(key, String(value));
-        }
-      }
-    });
-    const qs = queryString.toString();
-    if (qs) url += `?${qs}`;
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    ...options,
+    headers: { 'Content-Type': 'application/json', ...options.headers },
+  });
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : {};
+  if (!res.ok) {
+    const message = data?.error || data?.detail || `Request failed (${res.status})`;
+    throw new Error(message);
   }
+  return data as T;
+}
 
+function toQuery(params: Record<string, unknown>): string {
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '' || value === false) return;
+    qs.append(key, String(value));
+  });
+  const s = qs.toString();
+  return s ? `?${s}` : '';
+}
+
+// ---- Reads -----------------------------------------------------------------
+
+// NOTE: paths are intentionally slash-less; the Next proxy appends the
+// trailing slash Django expects (see next.config.mjs).
+
+export function fetchOpportunities(
+  filters: OpportunityFilters = {},
+): Promise<OpportunitiesResponse> {
+  return request<OpportunitiesResponse>(`/opportunities${toQuery({ ...filters })}`);
+}
+
+export function fetchStats(): Promise<Stats> {
+  return request<Stats>('/stats');
+}
+
+export function fetchFilters(platform: string): Promise<FilterCatalog> {
+  return request<FilterCatalog>(`/${platform}/filters`);
+}
+
+export async function checkHealth(): Promise<boolean> {
   try {
-    const response = await fetch(url, {
-      ...fetchOptions,
-      headers: {
-        'Content-Type': 'application/json',
-        ...fetchOptions.headers,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error('[API Error]', error);
-    throw error;
+    const res = await request<{ status: string }>('/health');
+    return res.status === 'ok';
+  } catch {
+    return false;
   }
 }
 
-// Fetch Contests/Projects (Merged modern APIs for posting time)
-export async function fetchContests(
-  filters: FilterOptions & { page?: number; limit?: number }
-): Promise<{ data: Project[]; total: number }> {
-  try {
-    const limit = filters.limit || 20;
-    const offset = (filters.page || 0) * limit;
+// ---- Writes (require api-key) ----------------------------------------------
 
-    // Fetch both Projects and Contests from modern APIs
-    const [projectsRes, contestsRes] = await Promise.all([
-      fetchProjects({ ...filters, limit }),
-      fetchApi<any>('/api/freelancer/api/contests/0.1/contests/active', {
-        params: {
-          limit,
-          offset,
-          compact: true,
-          webapp: 1,
-          query: filters.search || undefined,
-        }
-      })
-    ]);
-
-    const projects = projectsRes.data;
-    const contests = (contestsRes.result?.contests || []).map((c: any) => ({
-      ...c,
-      title: c.title,
-      description: c.description,
-      jobs: [],
-      budget: {
-        minimum: c.prize,
-        maximum: c.prize,
-        project_type: 'contest'
-      },
-      bid_stats: {
-        bid_count: 0,
-        bid_avg: 0
-      }
-    }));
-
-    // Merge and sort by time_submitted
-    let merged = [...projects, ...contests];
-    
-    if (filters.sortBy === 'newest') {
-      merged.sort((a, b) => (b.time_submitted || 0) - (a.time_submitted || 0));
-    }
-
-    return {
-      data: merged.slice(0, limit),
-      total: (projectsRes.total || 0) + (contestsRes.result?.total_count || 0)
-    };
-  } catch (error) {
-    console.error('Error merging projects and contests:', error);
-    return fetchProjects(filters);
-  }
-}
-
-// Fetch Projects/Jobs
-export async function fetchProjects(
-  filters: FilterOptions & { page?: number; limit?: number }
-): Promise<{ data: Project[]; total: number }> {
-  const jobIds = [9, 31, 68, 116, 305, 500, 564, 607, 613, 709, 759, 1031, 1084, 1087, 1092, 1093, 2164, 2165, 2703, 2839];
-
-  const params: Record<string, any> = {
-    limit: filters.limit || 20,
-    offset: (filters.page || 0) * (filters.limit || 20),
-    full_description: true,
-    job_details: true,
-    local_details: true,
-    location_details: true,
-    upgrade_details: true,
-    owner_info: true,
-    webapp: 1,
-    compact: true,
-    new_errors: true,
-    new_pools: true,
-  };
-
-  // Add job IDs
-  jobIds.forEach(id => {
-    params[`jobs[${jobIds.indexOf(id)}]`] = id;
-  });
-
-  // Add language
-  params['languages[0]'] = 'en';
-
-  // Add sorting
-  if (filters.sortBy) {
-    params['sort_field'] = filters.sortBy;
-  } else {
-    params['sort_field'] = 'time_submitted';
-  }
-
-  try {
-    const response = await fetchApi<ProjectsResponse>(
-      API_CONFIG.projects,
-      { params }
-    );
-    return {
-      data: response.result?.projects || [],
-      total: response.result?.total_count || response.result?.projects?.length || 0,
-    };
-  } catch (error) {
-    console.error('Error fetching projects:', error);
-    return { data: [], total: 0 };
-  }
-}
-
-// Filter projects by search term
-export function filterBySearch(
-  items: ContestProject[] | Project[], 
-  search: string
-): ContestProject[] | Project[] {
-  if (!search.trim()) return items;
-  
-  const query = search.toLowerCase();
-  return items.filter(item => {
-    return (
-      (item.title || '').toLowerCase().includes(query) ||
-      (item.description || '').toLowerCase().includes(query)
-    );
+export function triggerPull(body: Record<string, unknown>): Promise<PullResult> {
+  return request<PullResult>('/ingest', {
+    method: 'POST',
+    headers: { 'api-key': getApiKey() },
+    body: JSON.stringify(body),
   });
 }
 
-// Filter by budget
-export function filterByBudget(
-  items: ContestProject[] | Project[],
-  minBudget?: number,
-  maxBudget?: number
-): ContestProject[] | Project[] {
-  if (!minBudget && !maxBudget) return items;
-
-  return items.filter(item => {
-    const itemBudget = item.budget?.minimum || 0;
-
-    if (minBudget && itemBudget < minBudget) return false;
-    if (maxBudget && itemBudget > maxBudget) return false;
-    return true;
+export function pushJob(job: Record<string, unknown>): Promise<PushResult> {
+  return request<PushResult>('/ingest/push', {
+    method: 'POST',
+    headers: { 'api-key': getApiKey() },
+    body: JSON.stringify(job),
   });
 }
-
-// Sort items
-export function sortItems(
-  items: ContestProject[] | Project[],
-  sortBy: string,
-  sortOrder: 'asc' | 'desc' = 'desc'
-): ContestProject[] | Project[] {
-  const sorted = [...items].sort((a, b) => {
-    let aVal: any = '';
-    let bVal: any = '';
-
-    // Unified sorting for Project structure
-    switch (sortBy) {
-      case 'bids':
-        aVal = a.bid_stats?.bid_count || 0;
-        bVal = b.bid_stats?.bid_count || 0;
-        break;
-      case 'lowest_bids':
-        aVal = a.bid_stats?.bid_count || 0;
-        bVal = b.bid_stats?.bid_count || 0;
-        return aVal - bVal; // Ascending order
-      case 'budget':
-        aVal = a.budget?.minimum || 0;
-        bVal = b.budget?.minimum || 0;
-        break;
-      case 'newest':
-        aVal = a.time_submitted || 0;
-        bVal = b.time_submitted || 0;
-        break;
-      default:
-        return 0;
-    }
-
-    if (typeof aVal === 'number' && typeof bVal === 'number') {
-      return sortOrder === 'desc' ? bVal - aVal : aVal - bVal;
-    }
-
-    return 0;
-  });
-
-  return sorted;
-}
-
-// Mock data for demo purposes
-export const mockProjects: Project[] = [];
-
-export const mockJobs: Job[] =[];
