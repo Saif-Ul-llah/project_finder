@@ -9,6 +9,7 @@ import { Loader2, AlertCircle, RefreshCw, ShieldCheck } from 'lucide-react';
 import { Opportunity, OpportunitiesResponse, OpportunityFilters } from '@/lib/types';
 import { fetchOpportunities } from '@/lib/api';
 import { readCache, writeCache } from '@/lib/cache';
+import { useLiveUpdates } from '@/hooks/use-live-updates';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -112,6 +113,13 @@ function OpportunitiesContent() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheKey, refreshKey]);
+
+  // Smart polling: when the backend signals new/changed data, re-run the
+  // current query. The SWR cache keeps this flash-free.
+  const { revision } = useLiveUpdates(30000);
+  useEffect(() => {
+    if (revision > 0) setRefreshKey((k) => k + 1);
+  }, [revision]);
 
   const resetToFirstPage = () => setPage(1);
   const handleSearch = useCallback((q: string) => { setSearch(q); setPage(1); }, []);
@@ -219,9 +227,20 @@ function OpportunitiesContent() {
           <span>
             <span className="font-semibold text-foreground">{total}</span> opportunities found
           </span>
-          {refreshing && (
+          {refreshing ? (
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/70">
               <Loader2 className="w-3 h-3 animate-spin" /> updating…
+            </span>
+          ) : (
+            <span
+              className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400"
+              title="Auto-updating: the list refreshes when new jobs are ingested"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+              Live
             </span>
           )}
         </p>
