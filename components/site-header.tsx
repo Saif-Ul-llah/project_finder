@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { LayoutGrid, Settings } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -50,6 +51,7 @@ export function SiteHeader() {
               </Link>
             ))}
           </nav>
+          <ThemeToggle />
         </div>
       </div>
     </header>
