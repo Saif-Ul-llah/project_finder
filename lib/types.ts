@@ -1,156 +1,87 @@
-// Contest/Project types (Freelancer Datatable API)
-export interface ContestProject {
-  project_name: string;
-  seo_url: string;
-  project_desc: string;
-  bid_avg: string;
-  bid_count: number;
-  project_id: number;
-  is_contest: boolean;
-  time_left: string;
-  highlight: boolean;
-  featured: boolean;
-  urgent: boolean;
-  sealed: boolean;
-  guaranteed: boolean;
-  fulltime: boolean;
-  top: boolean;
-  payment_verified: boolean | null;
-  NDA: boolean;
-  local: boolean;
-  has_upgrades: boolean;
-  minbudget: string;
-  maxbudget: string;
-  budget_range: string;
-  skills_info: SkillInfo[];
-}
+// ============================================================================
+// Backend (project_hunting_backend_python) — unified Opportunity model
+// Served by GET /api/opportunities/ via the Next.js proxy at /api/backend/*
+// ============================================================================
 
-export interface SkillInfo {
+export interface Opportunity {
   id: number;
-  name: string;
-  seo_url: string;
-}
-
-export interface ContestProjectsResponse {
-  iTotalRecords: number;
-  iTotalDisplayRecords: number;
-  aaData: ContestProject[];
-}
-
-// Job types (Freelancer Projects API)
-export interface Project {
-  id: number;
+  external_id: string;
+  platform: string;
   title: string;
-  status: string;
-  seo_url: string;
-  currency: Currency;
   description: string;
-  jobs: JobCategory[];
-  owner_info?: OwnerInfo;
-  location_details?: LocationDetails;
-  local_details?: LocalDetails;
-  upgrade_details?: UpgradeDetails;
-  budget?: {
-    minimum: number;
-    maximum: number;
-    project_type: string;
-  };
-  bid_stats?: {
-    bid_count: number;
-    bid_avg: number;
-  };
-  time_submitted?: number;
+  url: string;
+  budget_raw: string | null;
+  budget_min: number | null;
+  budget_max: number | null;
+  job_type: 'hourly' | 'fixed' | null;
+  difficulty: string | null;
+  time_duration: string | null;
+  proposals_raw: string | null;
+  proposals_min: number | null;
+  proposals_max: number | null;
+  tech_stack: string[];
+  rating: number | null;
+  payment_status: string | null;
+  is_payment_verified: boolean;
+  client_country: string | null;
+  client_spent_numeric: number | null;
+  source_strategy: string | null;
+  content_hash: string;
+  posted_raw: string | null;
+  created_at: string;
 }
 
-export interface Currency {
-  id: number;
-  code: string;
-  sign: string;
-  name: string;
-  exchange_rate: number;
-  country: string;
-  is_external: boolean;
-  is_escrowcom_supported: boolean;
+export interface OpportunitiesResponse {
+  count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  results: Opportunity[];
 }
 
-export interface JobCategory {
-  id: number;
-  name: string;
-  category: {
-    id: number;
-    name: string;
-  };
-  seo_url: string;
-  local: boolean;
+export interface Stats {
+  total: number;
+  by_platform: Record<string, number>;
+  verified: number;
+  hourly: number;
+  fixed: number;
+  latest_created_at: string | null;
 }
 
-export interface OwnerInfo {
-  id: number;
-  username: string;
-  display_name: string;
-  location?: {
-    country: {
-      id: number;
-      name: string;
-      flag_url: string;
-    };
-  };
+export interface PullResult {
+  message: string;
+  fetched?: number;
+  created: number;
+  updated: number;
+  skipped_duplicates: number;
 }
 
-export interface LocationDetails {
-  country?: {
-    id: number;
-    name: string;
-    flag_url: string;
-  };
-  latitude?: number;
-  longitude?: number;
+export interface PushResult {
+  message: string;
+  job_id: number;
+  duplicate: boolean;
 }
 
-export interface LocalDetails {
-  local: boolean;
-  latitude?: number;
-  longitude?: number;
-}
-
-export interface UpgradeDetails {
-  featured: boolean;
-  urgent: boolean;
-  sealed: boolean;
-  guaranteed: boolean;
-  top: boolean;
-}
-
-export interface ProjectsResponse {
-  status: string;
-  result: {
-    projects: Project[];
-  };
-}
-
-export interface FilterOptions {
+// Filters used by the listing UI / query params sent to the backend.
+export interface OpportunityFilters {
   search?: string;
-  budgetMin?: number;
-  budgetMax?: number;
-  skills?: string[];
-  status?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  platform?: string;
+  job_type?: 'hourly' | 'fixed';
+  verified?: boolean;
+  min_budget?: number;
+  max_budget?: number;
+  sort?: string;
+  page?: number;
+  page_size?: number;
 }
 
-export interface PaginationState {
-  currentPage: number;
-  itemsPerPage: number;
-  totalItems: number;
-  totalPages: number;
-}
+// Filter catalog shape is platform-specific; kept loose.
+export type FilterCatalog = Record<string, unknown>;
 
-// Legacy types for backwards compatibility
-export interface Job {
-  id: string;
-  title: string;
-  description: string;
-  budget?: number;
-  status?: string;
-  skills?: string[];
-}
+export type SortOption =
+  | 'newest'
+  | 'oldest'
+  | 'budget_high'
+  | 'budget_low'
+  | 'proposals'
+  | 'rating';

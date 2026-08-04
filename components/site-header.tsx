@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Briefcase, LayoutGrid } from 'lucide-react';
+import { LayoutGrid, Settings } from 'lucide-react';
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -11,15 +11,15 @@ export function SiteHeader() {
   const routes = [
     {
       href: '/projects',
-      label: 'Projects & Contests',
+      label: 'Opportunities',
       icon: LayoutGrid,
       active: pathname === '/projects'
     },
     {
-      href: '/jobs',
-      label: 'Freelance Jobs',
-      icon: Briefcase,
-      active: pathname === '/jobs'
+      href: '/admin',
+      label: 'Admin',
+      icon: Settings,
+      active: pathname === '/admin'
     }
   ];
 
