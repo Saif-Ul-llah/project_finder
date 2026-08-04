@@ -3,7 +3,11 @@
 // Django backend base URL. Server-side only (kept out of the client bundle).
 // The rewrite below proxies /api/backend/* to the Django API so the browser
 // makes same-origin requests (no CORS needed).
-const BACKEND_API_URL = process.env.BACKEND_API_URL || 'http://127.0.0.1:8000'
+// Defaults to the deployed Railway backend; override with BACKEND_API_URL
+// (e.g. http://127.0.0.1:8000) to point at a local backend.
+const BACKEND_API_URL =
+  process.env.BACKEND_API_URL ||
+  'https://projecthuntingbackendpython-production.up.railway.app'
 
 const nextConfig = {
   typescript: {
