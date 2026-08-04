@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { SearchBar } from '@/components/search-bar';
 import { SortingSelect } from '@/components/sorting-select';
 import { Pagination } from '@/components/pagination';
 import { OpportunityCard } from '@/components/opportunity-card';
 import { Loader2, AlertCircle, RefreshCw, ShieldCheck } from 'lucide-react';
-import { Opportunity, OpportunityFilters } from '@/lib/types';
+import { Opportunity, OpportunitiesResponse, OpportunityFilters } from '@/lib/types';
 import { fetchOpportunities } from '@/lib/api';
+import { readCache, writeCache } from '@/lib/cache';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ const JOB_TYPES = [
 function OpportunitiesContent() {
   const [items, setItems] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -44,36 +46,72 @@ function OpportunitiesContent() {
   const [sort, setSort] = useState('newest');
   const [page, setPage] = useState(1);
 
+  const filters: OpportunityFilters = useMemo(
+    () => ({
+      search: search || undefined,
+      platform: platform || undefined,
+      job_type: (jobType as 'hourly' | 'fixed') || undefined,
+      verified: verified || undefined,
+      min_budget: minBudget ? Number(minBudget) : undefined,
+      max_budget: maxBudget ? Number(maxBudget) : undefined,
+      sort,
+      page,
+      page_size: ITEMS_PER_PAGE,
+    }),
+    [search, platform, jobType, verified, minBudget, maxBudget, sort, page],
+  );
+
+  const cacheKey = useMemo(() => `opps:${JSON.stringify(filters)}`, [filters]);
+
   useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const filters: OpportunityFilters = {
-          search: search || undefined,
-          platform: platform || undefined,
-          job_type: (jobType as 'hourly' | 'fixed') || undefined,
-          verified: verified || undefined,
-          min_budget: minBudget ? Number(minBudget) : undefined,
-          max_budget: maxBudget ? Number(maxBudget) : undefined,
-          sort,
-          page,
-          page_size: ITEMS_PER_PAGE,
-        };
-        const res = await fetchOpportunities(filters);
-        setItems(res.results);
+    let cancelled = false;
+
+    // Stale-while-revalidate: show cached results instantly on refresh, then
+    // revalidate in the background and only re-render if the data changed.
+    const cached = readCache<OpportunitiesResponse>(cacheKey);
+    if (cached) {
+      setItems(cached.results);
+      setTotal(cached.count);
+      setTotalPages(cached.total_pages || 1);
+      setLoading(false);
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    setError(null);
+
+    fetchOpportunities(filters)
+      .then((res) => {
+        if (cancelled) return;
+        writeCache(cacheKey, res);
+        setItems((prev) => {
+          const same =
+            prev.length === res.results.length &&
+            prev.every((p, i) => p.id === res.results[i]?.id);
+          return same ? prev : res.results; // avoid re-render when unchanged
+        });
         setTotal(res.count);
         setTotalPages(res.total_pages || 1);
-      } catch (err: any) {
+      })
+      .catch((err: any) => {
+        if (cancelled) return;
+        if (!cached) {
+          setItems([]);
+          setTotal(0);
+        }
         setError(err?.message || 'Failed to load opportunities. Is the backend running?');
-        setItems([]);
-        setTotal(0);
-      } finally {
+      })
+      .finally(() => {
+        if (cancelled) return;
         setLoading(false);
-      }
+        setRefreshing(false);
+      });
+
+    return () => {
+      cancelled = true;
     };
-    load();
-  }, [search, platform, jobType, verified, minBudget, maxBudget, sort, page, refreshKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cacheKey, refreshKey]);
 
   const resetToFirstPage = () => setPage(1);
   const handleSearch = useCallback((q: string) => { setSearch(q); setPage(1); }, []);
@@ -167,18 +205,25 @@ function OpportunitiesContent() {
           <div className="ml-auto flex items-center gap-3">
             <button
               onClick={() => setRefreshKey((k) => k + 1)}
-              disabled={loading}
+              disabled={loading || refreshing}
               className="inline-flex items-center gap-2 rounded-lg border border-border/50 bg-card hover:bg-accent px-3 h-10 text-sm font-medium text-muted-foreground hover:text-foreground transition-all disabled:opacity-50"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${loading || refreshing ? 'animate-spin' : ''}`} />
               Refresh
             </button>
             <SortingSelect value={sort} onSortChange={(v) => { setSort(v); resetToFirstPage(); }} />
           </div>
         </div>
 
-        <p className="text-sm text-muted-foreground mb-4">
-          <span className="font-semibold text-foreground">{total}</span> opportunities found
+        <p className="text-sm text-muted-foreground mb-4 flex items-center gap-2">
+          <span>
+            <span className="font-semibold text-foreground">{total}</span> opportunities found
+          </span>
+          {refreshing && (
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/70">
+              <Loader2 className="w-3 h-3 animate-spin" /> updating…
+            </span>
+          )}
         </p>
 
         {error && (

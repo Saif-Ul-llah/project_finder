@@ -344,7 +344,12 @@ function PollersCard() {
       await updatePoller({ platform, ...patch });
       await load();
     } catch (e: any) {
-      setErr(e?.message || 'Update failed (check API key)');
+      const msg = String(e?.message || '');
+      setErr(
+        /api key/i.test(msg) || /401/.test(msg)
+          ? 'Invalid or missing API key — set your Ingestion API Key below and click Save, then retry.'
+          : msg || 'Update failed.',
+      );
     } finally {
       setBusy(null);
     }
