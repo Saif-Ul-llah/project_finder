@@ -84,6 +84,15 @@ export function OpportunityCard({ opportunity: o }: { opportunity: Opportunity }
                 {o.job_type === 'hourly' ? 'Hourly' : 'Fixed-price'}
               </Badge>
             )}
+            {o.source_strategy && (
+              <Badge
+                variant="outline"
+                className="text-xs rounded-full capitalize text-muted-foreground"
+                title="Ingestion source"
+              >
+                {o.source_strategy}
+              </Badge>
+            )}
             {o.is_payment_verified && (
               <Badge className="text-xs rounded-full bg-emerald-500 hover:bg-emerald-600 text-white">
                 <Shield className="w-3 h-3 mr-1" />

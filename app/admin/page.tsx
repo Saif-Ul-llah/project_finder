@@ -185,15 +185,28 @@ export default function AdminPage() {
                 <Activity className="w-4 h-4" /> By platform
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-wrap gap-3">
-              {Object.entries(stats.by_platform).map(([p, n]) => (
-                <Badge key={p} variant="secondary" className="capitalize text-sm py-1 px-3">
-                  {p}: <span className="font-bold ml-1">{n}</span>
-                </Badge>
-              ))}
-              <Button variant="ghost" size="sm" className="gap-1 ml-auto" onClick={refreshStats}>
-                <RefreshCw className="w-3.5 h-3.5" /> Refresh
-              </Button>
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-xs uppercase tracking-wider text-muted-foreground w-16">Platform</span>
+                {Object.entries(stats.by_platform).map(([p, n]) => (
+                  <Badge key={p} variant="secondary" className="capitalize text-sm py-1 px-3">
+                    {p}: <span className="font-bold ml-1">{n}</span>
+                  </Badge>
+                ))}
+                <Button variant="ghost" size="sm" className="gap-1 ml-auto" onClick={refreshStats}>
+                  <RefreshCw className="w-3.5 h-3.5" /> Refresh
+                </Button>
+              </div>
+              {stats.by_source && Object.keys(stats.by_source).length > 0 && (
+                <div className="flex flex-wrap items-center gap-3 border-t border-border/40 pt-3">
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground w-16">Source</span>
+                  {Object.entries(stats.by_source).map(([s, n]) => (
+                    <Badge key={s} variant="outline" className="capitalize text-sm py-1 px-3">
+                      {s}: <span className="font-bold ml-1">{n}</span>
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

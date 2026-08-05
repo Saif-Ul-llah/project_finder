@@ -7,7 +7,7 @@ import { Pagination } from '@/components/pagination';
 import { OpportunityCard } from '@/components/opportunity-card';
 import { Loader2, AlertCircle, RefreshCw, ShieldCheck } from 'lucide-react';
 import { Opportunity, OpportunitiesResponse, OpportunityFilters } from '@/lib/types';
-import { fetchOpportunities } from '@/lib/api';
+import { fetchOpportunities, fetchStats } from '@/lib/api';
 import { readCache, writeCache } from '@/lib/cache';
 import { useLiveUpdates } from '@/hooks/use-live-updates';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -41,17 +41,27 @@ function OpportunitiesContent() {
   const [search, setSearch] = useState('');
   const [platform, setPlatform] = useState('');
   const [jobType, setJobType] = useState('');
+  const [source, setSource] = useState('');
   const [verified, setVerified] = useState(false);
   const [minBudget, setMinBudget] = useState('');
   const [maxBudget, setMaxBudget] = useState('');
   const [sort, setSort] = useState('newest');
   const [page, setPage] = useState(1);
 
+  // Available source values (populated from stats.by_source) for the filter.
+  const [sourceOptions, setSourceOptions] = useState<string[]>([]);
+  useEffect(() => {
+    fetchStats()
+      .then((s) => setSourceOptions(Object.keys(s.by_source || {})))
+      .catch(() => {});
+  }, [refreshKey]);
+
   const filters: OpportunityFilters = useMemo(
     () => ({
       search: search || undefined,
       platform: platform || undefined,
       job_type: (jobType as 'hourly' | 'fixed') || undefined,
+      source: source || undefined,
       verified: verified || undefined,
       min_budget: minBudget ? Number(minBudget) : undefined,
       max_budget: maxBudget ? Number(maxBudget) : undefined,
@@ -59,7 +69,7 @@ function OpportunitiesContent() {
       page,
       page_size: ITEMS_PER_PAGE,
     }),
-    [search, platform, jobType, verified, minBudget, maxBudget, sort, page],
+    [search, platform, jobType, source, verified, minBudget, maxBudget, sort, page],
   );
 
   const cacheKey = useMemo(() => `opps:${JSON.stringify(filters)}`, [filters]);
@@ -179,6 +189,21 @@ function OpportunitiesContent() {
               </button>
             ))}
           </div>
+
+          {/* Source filter (scraper / notification / api / push ...) */}
+          {sourceOptions.length > 0 && (
+            <select
+              value={source}
+              onChange={(e) => { setSource(e.target.value); resetToFirstPage(); }}
+              className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground capitalize"
+              title="Filter by ingestion source"
+            >
+              <option value="">All Sources</option>
+              {sourceOptions.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          )}
 
           {/* Verified toggle */}
           <Button

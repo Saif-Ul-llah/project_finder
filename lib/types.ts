@@ -42,6 +42,7 @@ export interface OpportunitiesResponse {
 export interface Stats {
   total: number;
   by_platform: Record<string, number>;
+  by_source: Record<string, number>;
   verified: number;
   hourly: number;
   fixed: number;
@@ -67,6 +68,7 @@ export interface OpportunityFilters {
   search?: string;
   platform?: string;
   job_type?: 'hourly' | 'fixed';
+  source?: string;
   verified?: boolean;
   min_budget?: number;
   max_budget?: number;
