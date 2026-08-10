@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { LayoutGrid, Settings } from 'lucide-react';
+import { LayoutGrid, Settings, Target } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 export function SiteHeader() {
@@ -15,6 +15,12 @@ export function SiteHeader() {
       label: 'Opportunities',
       icon: LayoutGrid,
       active: pathname === '/projects'
+    },
+    {
+      href: '/ranking',
+      label: 'Suggestions',
+      icon: Target,
+      active: pathname === '/ranking'
     },
     {
       href: '/admin',
