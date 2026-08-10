@@ -2,6 +2,7 @@
 // Mirrors lib/api.ts conventions: same proxy base, same fetch wrapper.
 
 import {
+  GeneratedProposal,
   LLMApiKeyAdmin,
   LLMApiKeyAdminInput,
   RankingConfigAdmin,
@@ -51,6 +52,18 @@ export function fetchRankedJob(jobId: number): Promise<RankingSuggestion> {
 
 export function fetchRankingGroups(): Promise<{ results: RankingGroup[] }> {
   return request<{ results: RankingGroup[] }>('/ranking/groups');
+}
+
+// Only eligible for jobs the Ranking Agent already recommends bidding on —
+// the backend rejects anything else with a 400. Requires the same api-key
+// used for admin actions (set on /admin), since this costs LLM tokens.
+export function generateProposal(
+  jobId: number,
+): Promise<Omit<GeneratedProposal, 'generated_at'>> {
+  return request<Omit<GeneratedProposal, 'generated_at'>>(`/ranked-jobs/${jobId}/proposal`, {
+    method: 'POST',
+    headers: { 'api-key': getApiKey() },
+  });
 }
 
 // ---- Admin: TechGroups (require api-key) ------------------------------------

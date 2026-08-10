@@ -1,10 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { RankingSuggestion } from '@/lib/types';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { GeneratedProposal, RankingSuggestion } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ExternalLink } from 'lucide-react';
+import { ChevronDown, ExternalLink, FileText, CheckCircle2 } from 'lucide-react';
+import { readProposal } from '@/lib/proposal-cache';
+
+const PROPOSAL_ELIGIBLE = new Set(['BID_IMMEDIATELY', 'BID']);
 
 const RECOMMENDATION_STYLES: Record<string, string> = {
   BID_IMMEDIATELY: 'bg-emerald-500 hover:bg-emerald-600 text-white',
@@ -45,6 +50,13 @@ function ScoreBar({ label, value }: { label: string; value: number | null }) {
 
 export function RankingCard({ suggestion: s }: { suggestion: RankingSuggestion }) {
   const [open, setOpen] = useState(false);
+  const [proposal, setProposal] = useState<GeneratedProposal | null>(null);
+
+  useEffect(() => {
+    setProposal(readProposal(s.job_id));
+  }, [s.job_id]);
+
+  const canGenerateProposal = PROPOSAL_ELIGIBLE.has(s.recommendation);
 
   return (
     <div className="border border-border/50 rounded-xl p-5 sm:p-6 bg-card hover:shadow-lg transition-all duration-300">
@@ -143,6 +155,17 @@ export function RankingCard({ suggestion: s }: { suggestion: RankingSuggestion }
           </a>
         </CollapsibleContent>
       </Collapsible>
+
+      {canGenerateProposal && (
+        <div className="mt-4 pt-4 border-t border-border/40">
+          <Button size="sm" variant="outline" className="gap-2" asChild>
+            <Link href={`/ranking/${s.job_id}/proposal`}>
+              {proposal ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <FileText className="w-4 h-4" />}
+              {proposal ? 'View Proposal' : 'Generate Proposal'}
+            </Link>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
