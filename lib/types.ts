@@ -117,6 +117,19 @@ export type RankingRecommendation =
   | 'DO_NOT_BID'
   | '';
 
+// ============================================================================
+// Proposal generation — POST /api/ranked-jobs/:id/proposal/
+// Cached client-side (localStorage) by job_id — see lib/proposal-cache.ts.
+// ============================================================================
+
+export interface GeneratedProposal {
+  job_id: number;
+  cover_letter: string;
+  bid: number;
+  duration: string;
+  generated_at: string;
+}
+
 export interface RankingSuggestion {
   job_id: number;
   title: string;
@@ -209,6 +222,7 @@ export interface RankingConfigAdmin {
   use_gemini: boolean;
   gemini_model: string;
   groq_model: string;
+  proposal_instruction: string;
   updated_at: string;
 }
 

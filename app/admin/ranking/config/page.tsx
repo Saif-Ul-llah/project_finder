@@ -98,7 +98,7 @@ export default function RankingConfigPage() {
               value={config.global_instruction}
               onChange={(e) => setField('global_instruction', e.target.value)}
               rows={4}
-              className="mt-1.5"
+              className="mt-1.5 max-h-96 overflow-y-auto resize-y"
             />
           </div>
           <div className="w-48">
@@ -155,6 +155,25 @@ export default function RankingConfigPage() {
               />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Proposal generator guidance</CardTitle>
+          <CardDescription>
+            How the AI should <em>write</em> proposals — tone, structure, length. Takes effect on
+            the next proposal generated, no deploy needed. The JSON output format itself isn't
+            editable here, so a change to this text can't break proposal parsing.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            value={config.proposal_instruction}
+            onChange={(e) => setField('proposal_instruction', e.target.value)}
+            rows={8}
+            className="font-mono text-sm max-h-96 overflow-y-auto resize-y"
+          />
         </CardContent>
       </Card>
 
