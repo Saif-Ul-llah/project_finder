@@ -31,7 +31,9 @@ import {
   RefreshCw,
   Database,
   LogOut,
+  Target,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   checkHealth,
@@ -164,6 +166,11 @@ export default function AdminPage() {
                 <XCircle className="w-3 h-3" /> Backend offline
               </Badge>
             )}
+            <Button variant="outline" size="sm" className="gap-2" asChild>
+              <Link href="/admin/ranking/groups">
+                <Target className="w-4 h-4" /> Ranking Agent Config
+              </Link>
+            </Button>
             <Button variant="outline" size="sm" className="gap-2" onClick={handleLogout}>
               <LogOut className="w-4 h-4" /> Log out
             </Button>
