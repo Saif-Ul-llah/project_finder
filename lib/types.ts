@@ -104,3 +104,147 @@ export type SortOption =
   | 'budget_low'
   | 'proposals'
   | 'rating';
+
+// ============================================================================
+// Ranking Agent — GET /api/ranked-jobs/ (list) and /api/ranked-jobs/:id/
+// ============================================================================
+
+export type RankingRecommendation =
+  | 'BID_IMMEDIATELY'
+  | 'BID'
+  | 'REVIEW_FIRST'
+  | 'LOW_PRIORITY'
+  | 'DO_NOT_BID'
+  | '';
+
+// ============================================================================
+// Proposal generation — POST /api/ranked-jobs/:id/proposal/
+// Cached client-side (localStorage) by job_id — see lib/proposal-cache.ts.
+// ============================================================================
+
+export interface GeneratedProposal {
+  job_id: number;
+  cover_letter: string;
+  bid: number;
+  duration: string;
+  generated_at: string;
+}
+
+export interface RankingSuggestion {
+  job_id: number;
+  title: string;
+  platform: string;
+  url: string;
+  job_type: 'hourly' | 'fixed' | null;
+  budget_raw: string | null;
+  budget_min: number | null;
+  budget_max: number | null;
+  tech_stack: string[];
+  client_country: string | null;
+  rating: number | null;
+  is_payment_verified: boolean;
+  proposals_raw: string | null;
+  created_at: string;
+  live_priority: number;
+  business_score: number | null;
+  recommendation: RankingRecommendation;
+  skill_match_score: number | null;
+  client_quality_score: number | null;
+  competition_score: number | null;
+  urgency_score: number | null;
+  risk_score: number | null;
+  risk_flags: string[];
+  tags: string[];
+  ai_reasoning: string;
+  dominant_group: string | null;
+  scored_at: string | null;
+}
+
+export interface RankingSuggestionsResponse {
+  count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  results: RankingSuggestion[];
+}
+
+export interface RankingGroup {
+  id: number;
+  name: string;
+  specialization: string;
+  domain: string;
+  priority_tier: string;
+}
+
+export interface RankingFilters {
+  search?: string;
+  group?: string;
+  tech_stack?: string;
+  min_priority?: number;
+  recommendation?: string;
+  sort?: string;
+  page?: number;
+  page_size?: number;
+}
+
+// ============================================================================
+// Ranking Admin config — /api/admin/groups/, /api/admin/ranking-config/,
+// /api/admin/api-keys/ (api-key protected, same header as the rest of admin)
+// ============================================================================
+
+export interface TechGroupAdmin {
+  id: number;
+  name: string;
+  keywords: string[];
+  instruction: string;
+  specialization: string;
+  domain: string;
+  priority_tier: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'IGNORE';
+  priority_weight: number;
+  base_decay_rate: number;
+  min_budget: number | null;
+  max_budget: number | null;
+  hourly_min_rate: number | null;
+  hourly_max_rate: number | null;
+  active: boolean;
+}
+
+export type TechGroupAdminInput = Omit<TechGroupAdmin, 'id'>;
+
+export interface RankingConfigAdmin {
+  global_instruction: string;
+  dead_job_ttl_hours: number;
+  skill_weight: number;
+  client_quality_weight: number;
+  competition_weight: number;
+  urgency_weight: number;
+  risk_penalty_weight: number;
+  use_gemini: boolean;
+  gemini_model: string;
+  groq_model: string;
+  proposal_instruction: string;
+  updated_at: string;
+}
+
+export type RankingConfigAdminInput = Omit<RankingConfigAdmin, 'updated_at'>;
+
+export interface LLMApiKeyAdmin {
+  id: number;
+  provider: 'gemini' | 'groq';
+  label: string;
+  model_name: string;
+  masked_key: string;
+  active: boolean;
+  failure_count: number;
+  cooldown_until: string | null;
+  last_used_at: string | null;
+  created_at: string;
+}
+
+export interface LLMApiKeyAdminInput {
+  provider: 'gemini' | 'groq';
+  label: string;
+  model_name: string;
+  key: string;
+  active: boolean;
+}
