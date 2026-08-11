@@ -116,6 +116,37 @@ export default function RankingConfigPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Ignore filter</CardTitle>
+          <CardDescription>
+            Jobs matching any of these keywords are filtered out before ranking and never sent to
+            the AI — no LLM tokens spent on them. Matches win regardless of what else the job
+            contains (e.g. an "LLM" job that also says "WordPress" still gets filtered if
+            "wordpress" is in this list).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Label htmlFor="c-ignored-stack">Ignored tech stack (comma-separated)</Label>
+          <Textarea
+            id="c-ignored-stack"
+            value={config.ignored_tech_stack.join(', ')}
+            onChange={(e) =>
+              setField(
+                'ignored_tech_stack',
+                e.target.value
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+              )
+            }
+            rows={3}
+            placeholder="seo, wordpress, php, video editing, tutoring"
+            className="mt-1.5"
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>LLM provider</CardTitle>
           <CardDescription>
             Which provider <code className="text-xs">run_ranking</code> calls. Must match a provider you have an
