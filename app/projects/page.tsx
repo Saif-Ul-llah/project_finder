@@ -13,6 +13,7 @@ import { useLiveUpdates } from '@/hooks/use-live-updates';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { CURRENCIES, EXPERIENCE_LEVELS, PROJECT_LENGTHS } from '@/lib/filter-options';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -45,14 +46,22 @@ function OpportunitiesContent() {
   const [verified, setVerified] = useState(false);
   const [minBudget, setMinBudget] = useState('');
   const [maxBudget, setMaxBudget] = useState('');
+  const [region, setRegion] = useState('');
+  const [currency, setCurrency] = useState('');
+  const [experience, setExperience] = useState('');
+  const [duration, setDuration] = useState('');
   const [sort, setSort] = useState('newest');
   const [page, setPage] = useState(1);
 
-  // Available source values (populated from stats.by_source) for the filter.
+  // Available source/region values (populated from stats) for the filters.
   const [sourceOptions, setSourceOptions] = useState<string[]>([]);
+  const [regionOptions, setRegionOptions] = useState<string[]>([]);
   useEffect(() => {
     fetchStats()
-      .then((s) => setSourceOptions(Object.keys(s.by_source || {})))
+      .then((s) => {
+        setSourceOptions(Object.keys(s.by_source || {}));
+        setRegionOptions(Object.keys(s.by_region || {}).sort());
+      })
       .catch(() => {});
   }, [refreshKey]);
 
@@ -65,11 +74,29 @@ function OpportunitiesContent() {
       verified: verified || undefined,
       min_budget: minBudget ? Number(minBudget) : undefined,
       max_budget: maxBudget ? Number(maxBudget) : undefined,
+      region: region || undefined,
+      currency: currency || undefined,
+      experience: experience || undefined,
+      duration: duration || undefined,
       sort,
       page,
       page_size: ITEMS_PER_PAGE,
     }),
-    [search, platform, jobType, source, verified, minBudget, maxBudget, sort, page],
+    [
+      search,
+      platform,
+      jobType,
+      source,
+      verified,
+      minBudget,
+      maxBudget,
+      region,
+      currency,
+      experience,
+      duration,
+      sort,
+      page,
+    ],
   );
 
   const cacheKey = useMemo(() => `opps:${JSON.stringify(filters)}`, [filters]);
@@ -204,6 +231,57 @@ function OpportunitiesContent() {
               ))}
             </select>
           )}
+
+          {/* Region filter */}
+          {regionOptions.length > 0 && (
+            <select
+              value={region}
+              onChange={(e) => { setRegion(e.target.value); resetToFirstPage(); }}
+              className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
+              title="Filter by client region"
+            >
+              <option value="">All Regions</option>
+              {regionOptions.map((r) => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
+          )}
+
+          {/* Currency filter */}
+          <select
+            value={currency}
+            onChange={(e) => { setCurrency(e.target.value); resetToFirstPage(); }}
+            className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
+            title="Filter by budget currency"
+          >
+            {CURRENCIES.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </select>
+
+          {/* Experience level filter */}
+          <select
+            value={experience}
+            onChange={(e) => { setExperience(e.target.value); resetToFirstPage(); }}
+            className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
+            title="Filter by experience level"
+          >
+            {EXPERIENCE_LEVELS.map((e) => (
+              <option key={e.value} value={e.value}>{e.label}</option>
+            ))}
+          </select>
+
+          {/* Project length filter */}
+          <select
+            value={duration}
+            onChange={(e) => { setDuration(e.target.value); resetToFirstPage(); }}
+            className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
+            title="Filter by project length"
+          >
+            {PROJECT_LENGTHS.map((d) => (
+              <option key={d.value} value={d.value}>{d.label}</option>
+            ))}
+          </select>
 
           {/* Verified toggle */}
           <Button

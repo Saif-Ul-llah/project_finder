@@ -43,6 +43,7 @@ export interface Stats {
   total: number;
   by_platform: Record<string, number>;
   by_source: Record<string, number>;
+  by_region: Record<string, number>;
   verified: number;
   hourly: number;
   fixed: number;
@@ -72,6 +73,10 @@ export interface OpportunityFilters {
   verified?: boolean;
   min_budget?: number;
   max_budget?: number;
+  region?: string;
+  currency?: string;
+  experience?: string;
+  duration?: string;
   sort?: string;
   page?: number;
   page_size?: number;
@@ -141,6 +146,8 @@ export interface RankingSuggestion {
   budget_max: number | null;
   tech_stack: string[];
   client_country: string | null;
+  difficulty: string | null;
+  time_duration: string | null;
   rating: number | null;
   is_payment_verified: boolean;
   proposals_raw: string | null;
@@ -179,9 +186,14 @@ export interface RankingGroup {
 export interface RankingFilters {
   search?: string;
   group?: string;
+  platform?: string;
   tech_stack?: string;
   min_priority?: number;
   recommendation?: string;
+  region?: string;
+  currency?: string;
+  experience?: string;
+  duration?: string;
   sort?: string;
   page?: number;
   page_size?: number;
@@ -214,6 +226,7 @@ export type TechGroupAdminInput = Omit<TechGroupAdmin, 'id'>;
 export interface RankingConfigAdmin {
   global_instruction: string;
   dead_job_ttl_hours: number;
+  ignored_tech_stack: string[];
   skill_weight: number;
   client_quality_weight: number;
   competition_weight: number;

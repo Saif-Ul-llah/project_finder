@@ -115,6 +115,24 @@ export function updateAdminRankingConfig(
   });
 }
 
+// ---- Admin: Ranking queue backlog (require api-key) --------------------------
+
+export function fetchRankingQueueStatus(): Promise<{ pending_count: number }> {
+  return request<{ pending_count: number }>('/admin/ranking-queue', {
+    headers: { 'api-key': getApiKey() },
+  });
+}
+
+// Marks every job currently pending in the ranking queue as skipped —
+// never sent to the AI, zero LLM tokens spent. Does not touch jobs that
+// already have a score.
+export function clearRankingQueue(): Promise<{ cleared: number }> {
+  return request<{ cleared: number }>('/admin/ranking-queue', {
+    method: 'POST',
+    headers: { 'api-key': getApiKey() },
+  });
+}
+
 // ---- Admin: LLM API keys (require api-key) -----------------------------------
 
 export function fetchAdminApiKeys(): Promise<LLMApiKeyAdmin[]> {
