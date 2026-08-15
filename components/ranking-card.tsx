@@ -33,6 +33,23 @@ function budgetText(s: RankingSuggestion): string {
   return 'TBD';
 }
 
+function formatKarachiTime(dateString: string | Date | null | undefined): string | null {
+  if (!dateString) return null;
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return null;
+
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Karachi',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(date);
+}
+
 function ScoreBar({ label, value }: { label: string; value: number | null }) {
   const v = value ?? 0;
   return (
@@ -94,6 +111,7 @@ export function RankingCard({ suggestion: s }: { suggestion: RankingSuggestion }
         <span>Budget: {budgetText(s)}</span>
         {s.rating != null && <span>Rating: {s.rating.toFixed(1)}</span>}
         {s.client_country && <span>{s.client_country}</span>}
+        {s.created_at && <span>Posted: {formatKarachiTime(s.created_at)}</span>}
       </div>
 
       {s.tech_stack?.length > 0 && (

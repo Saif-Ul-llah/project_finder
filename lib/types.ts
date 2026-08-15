@@ -165,6 +165,7 @@ export interface RankingSuggestion {
   ai_reasoning: string;
   dominant_group: string | null;
   scored_at: string | null;
+  
 }
 
 export interface RankingSuggestionsResponse {
