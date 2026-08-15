@@ -1,7 +1,3 @@
-// API client for the project_hunting_backend_python Django backend.
-// All requests go through the Next.js proxy (/api/backend/* -> Django /api/*)
-// so the browser stays same-origin (no CORS).
-
 import {
   FilterCatalog,
   OpportunitiesResponse,
@@ -12,11 +8,8 @@ import {
   SchedulerResponse,
   Stats,
 } from './types';
+import { getApiBaseUrl } from './api-config';
 
-const BASE = '/api/backend';
-
-// The ingestion api-key is required by the trigger/push endpoints. In the
-// admin UI it is stored in localStorage; this reads it at call time.
 export function getApiKey(): string {
   if (typeof window === 'undefined') return '';
   return localStorage.getItem('ingestion_api_key') || '';
@@ -27,7 +20,12 @@ export function setApiKey(key: string): void {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
+  const base = getApiBaseUrl();
+  if (!base) {
+    throw new Error('No backend URL configured. Go to Settings and set your API URL.');
+  }
+
+  const res = await fetch(`${base}/api${path}`, {
     ...options,
     headers: { 'Content-Type': 'application/json', ...options.headers },
   });
@@ -52,12 +50,7 @@ function toQuery(params: Record<string, unknown>): string {
 
 // ---- Reads -----------------------------------------------------------------
 
-// NOTE: paths are intentionally slash-less; the Next proxy appends the
-// trailing slash Django expects (see next.config.mjs).
-
-export function fetchOpportunities(
-  filters: OpportunityFilters = {},
-): Promise<OpportunitiesResponse> {
+export function fetchOpportunities(filters: OpportunityFilters = {}): Promise<OpportunitiesResponse> {
   return request<OpportunitiesResponse>(`/opportunities${toQuery({ ...filters })}`);
 }
 
