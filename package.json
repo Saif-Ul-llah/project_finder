@@ -68,6 +68,5 @@
     "tailwindcss": "^4.2.0",
     "tw-animate-css": "1.3.3",
     "typescript": "5.7.3"
-  },
-  "packageManager": "pnpm@12.0.0-rc.2+sha512.039b9da51bb21d9b530e321dc5fbebb4fa4a17515e18ce8333cb558f81037476d3b53f250e5a8f0243b5616c498deb0728b6eba9078b41bc32db977aa097d27a"
+  }
 }
