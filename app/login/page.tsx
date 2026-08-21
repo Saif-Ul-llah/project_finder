@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Card,
@@ -14,11 +15,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Lock, Loader2, ShieldAlert } from 'lucide-react';
+import { login } from '@/lib/auth-client';
 
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get('next') || '/admin';
+  const next = params.get('next') || '/ranking';
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -30,20 +32,11 @@ function LoginForm() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data?.error || 'Login failed.');
-        return;
-      }
+      await login(username, password);
       router.replace(next);
       router.refresh();
-    } catch {
-      setError('Network error — please try again.');
+    } catch (err: any) {
+      setError(err?.message || 'Login failed.');
     } finally {
       setLoading(false);
     }
@@ -56,34 +49,24 @@ function LoginForm() {
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <Lock className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle>Admin Sign In</CardTitle>
-          <CardDescription>Restricted — platform settings &amp; ingestion controls.</CardDescription>
+          <CardTitle>Sign in</CardTitle>
+          <CardDescription>Access ranking suggestions and proposal tools.</CardDescription>
         </CardHeader>
         <CardContent>
+          {params.get('denied') === 'admin' && (
+            <Alert variant="destructive" className="mb-4">
+              <ShieldAlert className="h-4 w-4" />
+              <AlertDescription>Admin access is required for that page.</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={submit} className="space-y-4">
             <div>
               <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                autoComplete="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="mt-1.5"
-                autoFocus
-                required
-              />
+              <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} className="mt-1.5" autoFocus required />
             </div>
             <div>
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1.5"
-                required
-              />
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1.5" required />
             </div>
             {error && (
               <Alert variant="destructive">
@@ -96,13 +79,17 @@ function LoginForm() {
               {loading ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            No account?{' '}
+            <Link href="/register" className="text-primary hover:underline">Create one</Link>
+          </p>
         </CardContent>
       </Card>
     </div>
   );
 }
 
-export default function AdminLoginPage() {
+export default function LoginPage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>}>
       <LoginForm />
