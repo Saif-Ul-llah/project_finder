@@ -8,6 +8,7 @@ const TABS = [
   { href: '/admin/ranking/groups', label: 'Groups' },
   { href: '/admin/ranking/config', label: 'Global Config' },
   { href: '/admin/ranking/keys', label: 'API Keys' },
+  { href: '/admin/ranking/queue', label: 'Queue' },
 ];
 
 export default function RankingAdminLayout({ children }: { children: React.ReactNode }) {
