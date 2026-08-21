@@ -13,10 +13,12 @@ import {
   Stats,
 } from './types';
 
+import { authHeaders, refreshAccess } from './auth-client';
+
 const BASE = '/api/backend';
 
-// The ingestion api-key is required by the trigger/push endpoints. In the
-// admin UI it is stored in localStorage; this reads it at call time.
+// Legacy: the ingestion api-key. Still accepted by the backend for admin
+// endpoints, but the UI now authenticates admins with JWT instead.
 export function getApiKey(): string {
   if (typeof window === 'undefined') return '';
   return localStorage.getItem('ingestion_api_key') || '';
@@ -26,11 +28,16 @@ export function setApiKey(key: string): void {
   if (typeof window !== 'undefined') localStorage.setItem('ingestion_api_key', key);
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+// Shared request wrapper: attaches the JWT (Authorization: Bearer) and retries
+// once after refreshing the access token on a 401.
+export async function request<T>(path: string, options: RequestInit = {}, _retried = false): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     ...options,
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    headers: { 'Content-Type': 'application/json', ...authHeaders(), ...options.headers },
   });
+  if (res.status === 401 && !_retried) {
+    if (await refreshAccess()) return request<T>(path, options, true);
+  }
   const text = await res.text();
   const data = text ? JSON.parse(text) : {};
   if (!res.ok) {

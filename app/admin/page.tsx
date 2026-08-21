@@ -46,6 +46,7 @@ import {
   setApiKey as persistApiKey,
 } from '@/lib/api';
 import { Stats, PullResult, FilterCatalog, Poller } from '@/lib/types';
+import { logout, getUser } from '@/lib/auth-client';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -92,13 +93,9 @@ export default function AdminPage() {
     setTimeout(() => setSavedKey(false), 2000);
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-    } catch {
-      /* ignore */
-    }
-    router.replace('/admin/login');
+  const handleLogout = () => {
+    logout();
+    router.replace('/login');
     router.refresh();
   };
 

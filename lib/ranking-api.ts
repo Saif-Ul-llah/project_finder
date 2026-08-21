@@ -14,23 +14,11 @@ import {
   TechGroupAdmin,
   TechGroupAdminInput,
 } from './types';
-import { getApiKey } from './api';
+import { getApiKey, request } from './api';
 
-const BASE = '/api/backend';
-
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-  });
-  const text = await res.text();
-  const data = text ? JSON.parse(text) : {};
-  if (!res.ok) {
-    const message = data?.error || data?.detail || `Request failed (${res.status})`;
-    throw new Error(message);
-  }
-  return data as T;
-}
+// Re-uses the shared request() from lib/api.ts, which attaches the JWT
+// (Authorization: Bearer) and refreshes the token on a 401.
+export { getApiKey };
 
 function toQuery(params: Record<string, unknown>): string {
   const qs = new URLSearchParams();
