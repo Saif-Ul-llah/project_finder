@@ -133,3 +133,13 @@ export function deleteAdminApiKey(id: number): Promise<void> {
     headers: { 'api-key': getApiKey() },
   });
 }
+
+// ---- Admin: ranking queue backlog (admin only) ------------------------------
+
+export function fetchRankingQueueStatus(): Promise<{ pending_count: number }> {
+  return request<{ pending_count: number }>('/admin/ranking-queue');
+}
+
+export function clearRankingQueue(): Promise<{ cleared: number }> {
+  return request<{ cleared: number }>('/admin/ranking-queue', { method: 'POST' });
+}
