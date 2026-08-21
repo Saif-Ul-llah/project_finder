@@ -97,6 +97,29 @@ export interface SchedulerResponse {
   pollers: Poller[];
 }
 
+// ============================================================================
+// Admin: user management (admin-only) — /api/admin/users/
+// ============================================================================
+
+export interface AdminUser {
+  id: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: 'admin' | 'member';
+  is_active: boolean;
+  date_joined: string;
+}
+
+export interface AdminUserInput {
+  username: string;
+  email?: string;
+  password?: string;
+  role?: 'admin' | 'member';
+  is_active?: boolean;
+}
+
 export type SortOption =
   | 'newest'
   | 'oldest'

@@ -32,6 +32,9 @@ import {
   Database,
   LogOut,
   Target,
+  Users,
+  Trash2,
+  HardDrive,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -47,6 +50,7 @@ import {
 } from '@/lib/api';
 import { Stats, PullResult, FilterCatalog, Poller } from '@/lib/types';
 import { logout, getUser } from '@/lib/auth-client';
+import { previewOldJobs, deleteOldJobs } from '@/lib/users-api';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -164,6 +168,11 @@ export default function AdminPage() {
               </Badge>
             )}
             <Button variant="outline" size="sm" className="gap-2" asChild>
+              <Link href="/admin/users">
+                <Users className="w-4 h-4" /> Users
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2" asChild>
               <Link href="/admin/ranking/groups">
                 <Target className="w-4 h-4" /> Ranking Agent Config
               </Link>
@@ -217,6 +226,9 @@ export default function AdminPage() {
 
         {/* Background pollers */}
         <PollersCard />
+
+        {/* Storage cleanup */}
+        <CleanupCard />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           {/* API key config */}
@@ -477,6 +489,100 @@ function PollersCard() {
           ⚠️ Very short intervals (e.g. 5s) can get your IP rate-limited by the platforms and
           rarely surface new jobs. 60s+ is recommended.
         </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CleanupCard() {
+  const [days, setDays] = useState('2');
+  const [eligible, setEligible] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  const preview = async () => {
+    setBusy(true);
+    setErr(null);
+    setMsg(null);
+    try {
+      const res = await previewOldJobs(Number(days) || 2);
+      setEligible(res.eligible_count);
+    } catch (e: any) {
+      setErr(e?.message || 'Failed to load count.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const purge = async () => {
+    if (!confirm(`Permanently delete jobs older than ${days} day(s)? This cannot be undone.`)) return;
+    setBusy(true);
+    setErr(null);
+    setMsg(null);
+    try {
+      const deleted = await deleteOldJobs(Number(days) || 2);
+      setMsg(`Deleted ${deleted} old job(s). Storage reclaimed.`);
+      setEligible(0);
+    } catch (e: any) {
+      setErr(e?.message || 'Delete failed.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <HardDrive className="w-4 h-4" /> Storage cleanup
+        </CardTitle>
+        <CardDescription>
+          Permanently delete old, stale jobs to reclaim storage. Hard delete — no backup.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <Label htmlFor="cleanup-days">Older than (days)</Label>
+            <Input
+              id="cleanup-days"
+              type="number"
+              min={1}
+              value={days}
+              onChange={(e) => { setDays(e.target.value); setEligible(null); }}
+              className="mt-1 w-28"
+            />
+          </div>
+          <Button variant="outline" onClick={preview} disabled={busy}>
+            {busy && <Loader2 className="w-4 h-4 animate-spin mr-1" />} Preview count
+          </Button>
+          {eligible !== null && (
+            <span className="text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">{eligible}</span> job(s) eligible
+            </span>
+          )}
+          <Button
+            variant="destructive"
+            className="gap-2 ml-auto"
+            onClick={purge}
+            disabled={busy || eligible === 0}
+          >
+            <Trash2 className="w-4 h-4" /> Delete old jobs
+          </Button>
+        </div>
+        {msg && (
+          <Alert>
+            <CheckCircle2 className="h-4 w-4" />
+            <AlertDescription>{msg}</AlertDescription>
+          </Alert>
+        )}
+        {err && (
+          <Alert variant="destructive">
+            <XCircle className="h-4 w-4" />
+            <AlertDescription>{err}</AlertDescription>
+          </Alert>
+        )}
       </CardContent>
     </Card>
   );
