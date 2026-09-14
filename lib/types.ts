@@ -129,6 +129,11 @@ export type RankingRecommendation =
 
 export interface GeneratedProposal {
   job_id: number;
+  // How the AI decided to approach the job, before it wrote anything.
+  // Optional: proposals cached before strategy existed don't carry these.
+  verdict?: string;
+  angle?: string;
+  pricing?: string;
   cover_letter: string;
   bid: number;
   duration: string;
