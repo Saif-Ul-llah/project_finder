@@ -72,6 +72,12 @@ export interface OpportunityFilters {
   verified?: boolean;
   min_budget?: number;
   max_budget?: number;
+  region?: string;
+  currency?: string;
+  experience?: string;
+  duration?: string;
+  project_type?: string;
+  tech_stack?: string;
   sort?: string;
   page?: number;
   page_size?: number;
