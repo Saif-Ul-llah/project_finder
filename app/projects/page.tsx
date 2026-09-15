@@ -13,6 +13,7 @@ import { useLiveUpdates } from '@/hooks/use-live-updates';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { CURRENCIES, EXPERIENCE_LEVELS, PROJECT_LENGTHS, PROJECT_TYPES, TECH_STACKS } from '@/lib/filter-options';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -45,6 +46,12 @@ function OpportunitiesContent() {
   const [verified, setVerified] = useState(false);
   const [minBudget, setMinBudget] = useState('');
   const [maxBudget, setMaxBudget] = useState('');
+  const [region, setRegion] = useState('');
+  const [currency, setCurrency] = useState('');
+  const [experience, setExperience] = useState('');
+  const [duration, setDuration] = useState('');
+  const [projectType, setProjectType] = useState('');
+  const [techStack, setTechStack] = useState('');
   const [sort, setSort] = useState('newest');
   const [page, setPage] = useState(1);
 
@@ -65,11 +72,33 @@ function OpportunitiesContent() {
       verified: verified || undefined,
       min_budget: minBudget ? Number(minBudget) : undefined,
       max_budget: maxBudget ? Number(maxBudget) : undefined,
+      region: region || undefined,
+      currency: currency || undefined,
+      experience: experience || undefined,
+      duration: duration || undefined,
+      project_type: projectType || undefined,
+      tech_stack: techStack || undefined,
       sort,
       page,
       page_size: ITEMS_PER_PAGE,
     }),
-    [search, platform, jobType, source, verified, minBudget, maxBudget, sort, page],
+    [
+      search,
+      platform,
+      jobType,
+      source,
+      verified,
+      minBudget,
+      maxBudget,
+      region,
+      currency,
+      experience,
+      duration,
+      projectType,
+      techStack,
+      sort,
+      page,
+    ],
   );
 
   const cacheKey = useMemo(() => `opps:${JSON.stringify(filters)}`, [filters]);
@@ -160,20 +189,17 @@ function OpportunitiesContent() {
 
         {/* Filter bar */}
         <div className="flex flex-wrap items-center gap-3 mb-6">
-          {/* Platform tabs */}
-          <div className="flex rounded-lg border border-border/60 bg-card p-1">
+          {/* Platform dropdown */}
+          <select
+            value={platform}
+            onChange={(e) => { setPlatform(e.target.value); resetToFirstPage(); }}
+            className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
+            title="Filter by platform"
+          >
             {PLATFORMS.map((p) => (
-              <button
-                key={p.value}
-                onClick={() => { setPlatform(p.value); resetToFirstPage(); }}
-                className={`px-3 h-8 rounded-md text-sm font-medium transition-colors ${
-                  platform === p.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {p.label}
-              </button>
+              <option key={p.value} value={p.value}>{p.label}</option>
             ))}
-          </div>
+          </select>
 
           {/* Job type */}
           <div className="flex rounded-lg border border-border/60 bg-card p-1">
@@ -190,6 +216,42 @@ function OpportunitiesContent() {
             ))}
           </div>
 
+          {/* Project type dropdown */}
+          <select
+            value={projectType}
+            onChange={(e) => { setProjectType(e.target.value); resetToFirstPage(); }}
+            className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
+            title="Filter by project type"
+          >
+            {PROJECT_TYPES.map((pt) => (
+              <option key={pt.value} value={pt.value}>{pt.label}</option>
+            ))}
+          </select>
+
+          {/* Tech stack dropdown */}
+          <select
+            value={techStack}
+            onChange={(e) => { setTechStack(e.target.value); resetToFirstPage(); }}
+            className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
+            title="Filter by tech stack"
+          >
+            {TECH_STACKS.map((ts) => (
+              <option key={ts.value} value={ts.value}>{ts.label}</option>
+            ))}
+          </select>
+
+          {/* Project duration dropdown */}
+          <select
+            value={duration}
+            onChange={(e) => { setDuration(e.target.value); resetToFirstPage(); }}
+            className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
+            title="Filter by project duration"
+          >
+            {PROJECT_LENGTHS.map((d) => (
+              <option key={d.value} value={d.value}>{d.label}</option>
+            ))}
+          </select>
+
           {/* Source filter (scraper / notification / api / push ...) */}
           {sourceOptions.length > 0 && (
             <select
@@ -204,6 +266,45 @@ function OpportunitiesContent() {
               ))}
             </select>
           )}
+
+          {/* Region filter */}
+          {regionOptions.length > 0 && (
+            <select
+              value={region}
+              onChange={(e) => { setRegion(e.target.value); resetToFirstPage(); }}
+              className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
+              title="Filter by client region"
+            >
+              <option value="">All Regions</option>
+              {regionOptions.map((r) => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
+          )}
+
+          {/* Currency filter */}
+          <select
+            value={currency}
+            onChange={(e) => { setCurrency(e.target.value); resetToFirstPage(); }}
+            className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
+            title="Filter by budget currency"
+          >
+            {CURRENCIES.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </select>
+
+          {/* Experience level filter */}
+          <select
+            value={experience}
+            onChange={(e) => { setExperience(e.target.value); resetToFirstPage(); }}
+            className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
+            title="Filter by experience level"
+          >
+            {EXPERIENCE_LEVELS.map((e) => (
+              <option key={e.value} value={e.value}>{e.label}</option>
+            ))}
+          </select>
 
           {/* Verified toggle */}
           <Button
