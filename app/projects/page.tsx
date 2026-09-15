@@ -267,21 +267,6 @@ function OpportunitiesContent() {
             </select>
           )}
 
-          {/* Region filter */}
-          {regionOptions.length > 0 && (
-            <select
-              value={region}
-              onChange={(e) => { setRegion(e.target.value); resetToFirstPage(); }}
-              className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
-              title="Filter by client region"
-            >
-              <option value="">All Regions</option>
-              {regionOptions.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-          )}
-
           {/* Currency filter */}
           <select
             value={currency}
