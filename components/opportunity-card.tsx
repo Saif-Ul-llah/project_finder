@@ -3,18 +3,49 @@
 import { Opportunity } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import {
-  Shield,
-  MapPin,
-  TrendingUp,
+  CalendarClock,
   Clock,
-  Star,
   ExternalLink,
+  MapPin,
+  Shield,
+  Star,
+  TrendingUp,
 } from 'lucide-react';
 
+// Amber for tender so institutional sources read differently from the
+// gig-platform greens and blues at a glance.
 const PLATFORM_STYLES: Record<string, string> = {
   upwork: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
   freelancer: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+  fiverr: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
+  workana: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
+  freelancermap: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
+  tender: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
 };
+
+/** Days until `iso`, negative when past. */
+function daysUntil(iso: string): number {
+  return Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
+}
+
+/** Closing-date badge copy and urgency colour for a tender. */
+function deadlineBadge(iso: string): { text: string; className: string } {
+  const days = daysUntil(iso);
+  if (days < 0) {
+    return { text: 'Closed', className: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30' };
+  }
+  if (days === 0) {
+    return { text: 'Closes today', className: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30' };
+  }
+  const text = days === 1 ? 'Closes tomorrow' : `Closes in ${days} days`;
+  return {
+    text,
+    className:
+      days <= 7
+        ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30'
+        : 'bg-secondary/50 text-muted-foreground border-border/60',
+  };
+}
 
 function budgetText(o: Opportunity): string {
   if (o.budget_raw) return o.budget_raw;
@@ -102,6 +133,16 @@ export function OpportunityCard({ opportunity: o }: { opportunity: Opportunity }
             {isNew && (
               <Badge className="text-xs rounded-full bg-amber-500 hover:bg-amber-600 text-white animate-pulse">
                 New
+              </Badge>
+            )}
+            {o.deadline && (
+              <Badge
+                variant="outline"
+                className={`text-xs rounded-full ${deadlineBadge(o.deadline).className}`}
+                title={`Submission deadline: ${new Date(o.deadline).toLocaleString()}`}
+              >
+                <CalendarClock className="w-3 h-3 mr-1" />
+                {deadlineBadge(o.deadline).text}
               </Badge>
             )}
           </div>

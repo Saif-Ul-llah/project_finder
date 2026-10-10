@@ -94,3 +94,28 @@ export const TECH_STACKS: { label: string; value: string }[] = [
   { label: 'Salesforce', value: 'Salesforce' },
   { label: 'Power BI', value: 'Power BI' },
 ];
+
+// Mirrors app/platforms/registry.py in the backend — keep them in step when
+// adding a platform. Static rather than fetched: the list only changes when
+// an adapter is written, and a dropdown that must render on first paint
+// shouldn't carry a loading state for it.
+export const PLATFORMS: { label: string; value: string }[] = [
+  { label: 'All Platforms', value: '' },
+  { label: 'Upwork', value: 'upwork' },
+  { label: 'Freelancer', value: 'freelancer' },
+  { label: 'Fiverr', value: 'fiverr' },
+  { label: 'Workana', value: 'workana' },
+  { label: 'Freelancermap', value: 'freelancermap' },
+  { label: 'Tender', value: 'tender' },
+];
+
+// Platforms shown on /enterprise. A list, so more large-organisation sources
+// can join without touching the page — the backend accepts a comma-separated
+// ?platform= value.
+export const ENTERPRISE_PLATFORMS = ['tender'] as const;
+export const ENTERPRISE_PLATFORM_PARAM = ENTERPRISE_PLATFORMS.join(',');
+
+/** Human label for a platform slug, falling back to the slug itself. */
+export function platformLabel(slug: string): string {
+  return PLATFORMS.find((p) => p.value === slug)?.label ?? slug;
+}
