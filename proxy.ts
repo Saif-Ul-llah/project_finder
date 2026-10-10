@@ -5,7 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 //
 //   /admin, /admin/*          -> require role=admin
 //   /ranking, /ranking/*      -> require login (member or admin)
-//   /projects, /jobs          -> require login (member or admin)
+//   /projects, /enterprise,
+//   /jobs                     -> require login (member or admin)
 //   /, /login, /register      -> public (landing + the auth pages themselves)
 //
 // Everything that shows real data is behind a login; only the landing page
@@ -18,6 +19,8 @@ export const config = {
     '/ranking/:path*',
     '/projects',
     '/projects/:path*',
+    '/enterprise',
+    '/enterprise/:path*',
     '/jobs',
     '/jobs/:path*',
   ],
@@ -45,7 +48,8 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // /ranking, /projects, /jobs and children — any authenticated user.
+  // /ranking, /projects, /enterprise, /jobs and children — any
+  // authenticated user.
   if (!hasToken) return redirectToLogin(req, pathname);
   return NextResponse.next();
 }
