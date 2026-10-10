@@ -22,3 +22,5 @@ node_modules
 next-env.d.ts    
 node_modules_electron
 node_modules_electron
+# TypeScript build artifacts
+*.tsbuildinfo

@@ -46,9 +46,51 @@ export const EXPERIENCE_LEVELS: { label: string; value: string }[] = [
 // duration + hours/week (e.g. "1 to 3 months, Less than 30 hrs/week") — so
 // a substring match is what actually works here, not an exact match.
 export const PROJECT_LENGTHS: { label: string; value: string }[] = [
-  { label: 'All Lengths', value: '' },
+  { label: 'All Durations', value: '' },
   { label: 'Less than 1 month', value: 'Less than 1 month' },
   { label: '1 to 3 months', value: '1 to 3 months' },
   { label: '3 to 6 months', value: '3 to 6 months' },
   { label: 'More than 6 months', value: 'More than 6 months' },
+];
+
+// Project type acts as a keyword filter against title + description.
+// Values are sent to the backend as ?project_type=<value> and matched
+// with icontains so jobs mentioning "ERP" or "CRM" are surfaced.
+export const PROJECT_TYPES: { label: string; value: string }[] = [
+  { label: 'All Types', value: '' },
+  { label: 'ERP', value: 'ERP' },
+  { label: 'CRM', value: 'CRM' },
+  { label: 'E-Commerce', value: 'e-commerce' },
+  { label: 'SaaS / Web App', value: 'SaaS' },
+  { label: 'Mobile App', value: 'mobile app' },
+  { label: 'Data Analytics / BI', value: 'analytics' },
+  { label: 'AI / ML', value: 'machine learning' },
+  { label: 'Automation / Scraping', value: 'automation' },
+  { label: 'API Integration', value: 'API integration' },
+  { label: 'DevOps / Infrastructure', value: 'DevOps' },
+];
+
+// Tech stack is matched with icontains against the tech_stack JSONField
+// stored as a JSON array of strings (e.g. ["Django", "PostgreSQL"]).
+export const TECH_STACKS: { label: string; value: string }[] = [
+  { label: 'All Tech Stacks', value: '' },
+  { label: 'Django', value: 'Django' },
+  { label: 'MS Dynamics', value: 'Dynamics' },
+  { label: 'Odoo', value: 'Odoo' },
+  { label: 'SAP', value: 'SAP' },
+  { label: 'React', value: 'React' },
+  { label: 'Next.js', value: 'Next.js' },
+  { label: 'Node.js', value: 'Node.js' },
+  { label: 'Python', value: 'Python' },
+  { label: 'Laravel / PHP', value: 'Laravel' },
+  { label: 'Vue.js', value: 'Vue' },
+  { label: 'Flutter', value: 'Flutter' },
+  { label: 'WordPress', value: 'WordPress' },
+  { label: 'Shopify', value: 'Shopify' },
+  { label: 'PostgreSQL', value: 'PostgreSQL' },
+  { label: 'MongoDB', value: 'MongoDB' },
+  { label: 'AWS', value: 'AWS' },
+  { label: 'Docker / Kubernetes', value: 'Docker' },
+  { label: 'Salesforce', value: 'Salesforce' },
+  { label: 'Power BI', value: 'Power BI' },
 ];

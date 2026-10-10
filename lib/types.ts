@@ -77,6 +77,8 @@ export interface OpportunityFilters {
   currency?: string;
   experience?: string;
   duration?: string;
+  project_type?: string;
+  tech_stack?: string;
   sort?: string;
   page?: number;
   page_size?: number;
@@ -100,6 +102,29 @@ export interface Poller {
 
 export interface SchedulerResponse {
   pollers: Poller[];
+}
+
+// ============================================================================
+// Admin: user management (admin-only) — /api/admin/users/
+// ============================================================================
+
+export interface AdminUser {
+  id: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: 'admin' | 'member';
+  is_active: boolean;
+  date_joined: string;
+}
+
+export interface AdminUserInput {
+  username: string;
+  email?: string;
+  password?: string;
+  role?: 'admin' | 'member';
+  is_active?: boolean;
 }
 
 export type SortOption =
@@ -129,15 +154,15 @@ export type RankingRecommendation =
 
 export interface GeneratedProposal {
   job_id: number;
+  cover_letter: string;
+  bid: number;
+  duration: string;
+  generated_at: string;
   // How the AI decided to approach the job, before it wrote anything.
   // Optional: proposals cached before strategy existed don't carry these.
   verdict?: string;
   angle?: string;
   pricing?: string;
-  cover_letter: string;
-  bid: number;
-  duration: string;
-  generated_at: string;
 }
 
 export interface RankingSuggestion {
@@ -151,11 +176,11 @@ export interface RankingSuggestion {
   budget_max: number | null;
   tech_stack: string[];
   client_country: string | null;
-  difficulty: string | null;
-  time_duration: string | null;
   rating: number | null;
   is_payment_verified: boolean;
   proposals_raw: string | null;
+  difficulty: string | null;
+  time_duration: string | null;
   created_at: string;
   live_priority: number;
   business_score: number | null;
@@ -170,7 +195,6 @@ export interface RankingSuggestion {
   ai_reasoning: string;
   dominant_group: string | null;
   scored_at: string | null;
-  
 }
 
 export interface RankingSuggestionsResponse {
