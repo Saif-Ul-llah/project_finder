@@ -3,11 +3,24 @@ import { NextRequest, NextResponse } from 'next/server';
 // Route gating based on the JWT cookies set at login (see lib/auth-client.ts).
 // The backend is the real security boundary; this only drives UX redirects.
 //
-//   /admin, /admin/*        -> require role=admin
-//   /ranking, /ranking/*    -> require login (member or admin)
-//   everything else         -> public (job listing, home, login, register)
+//   /admin, /admin/*          -> require role=admin
+//   /ranking, /ranking/*      -> require login (member or admin)
+//   /projects, /jobs          -> require login (member or admin)
+//   /, /login, /register      -> public (landing + the auth pages themselves)
+//
+// Everything that shows real data is behind a login; only the landing page
+// and the auth screens stay open.
 export const config = {
-  matcher: ['/admin', '/admin/:path*', '/ranking', '/ranking/:path*'],
+  matcher: [
+    '/admin',
+    '/admin/:path*',
+    '/ranking',
+    '/ranking/:path*',
+    '/projects',
+    '/projects/:path*',
+    '/jobs',
+    '/jobs/:path*',
+  ],
 };
 
 const ACCESS_COOKIE = 'pf_access';
@@ -32,7 +45,7 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // /ranking and children — any authenticated user.
+  // /ranking, /projects, /jobs and children — any authenticated user.
   if (!hasToken) return redirectToLogin(req, pathname);
   return NextResponse.next();
 }
