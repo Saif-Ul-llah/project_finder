@@ -11,7 +11,7 @@
 
 import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { SearchBar } from '@/components/search-bar';
-import { SortingSelect } from '@/components/sorting-select';
+import { DEADLINE_SORT_OPTIONS, SortingSelect } from '@/components/sorting-select';
 import { Pagination } from '@/components/pagination';
 import { OpportunityCard } from '@/components/opportunity-card';
 import { AlertCircle, Building2, Loader2, RefreshCw } from 'lucide-react';
@@ -28,7 +28,7 @@ import {
   ENTERPRISE_PLATFORM_PARAM,
   platformLabel,
 } from '@/lib/filter-options';
-import type { FilterValues } from '@/lib/filter-schema';
+import { ENTERPRISE_FILTERS, type FilterValues } from '@/lib/filter-schema';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -196,6 +196,7 @@ function EnterpriseContent() {
           values={values}
           onChange={updateFilters}
           onReset={resetFilters}
+          fields={ENTERPRISE_FILTERS}
           hiddenFields={[...HIDDEN_FIELDS]}
           dynamicOptions={dynamicOptions}
         />
@@ -206,6 +207,7 @@ function EnterpriseContent() {
             onChange={updateFilters}
             onReset={resetFilters}
             resultCount={total}
+            fields={ENTERPRISE_FILTERS}
             hiddenFields={[...HIDDEN_FIELDS]}
             dynamicOptions={dynamicOptions}
           />
@@ -219,7 +221,11 @@ function EnterpriseContent() {
               <RefreshCw className={`w-4 h-4 ${loading || refreshing ? 'animate-spin' : ''}`} />
               Refresh
             </button>
-            <SortingSelect value={sort} onSortChange={(v) => { setSort(v); resetToFirstPage(); }} />
+            <SortingSelect
+              value={sort}
+              options={DEADLINE_SORT_OPTIONS}
+              onSortChange={(v) => { setSort(v); resetToFirstPage(); }}
+            />
           </div>
         </div>
 
