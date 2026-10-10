@@ -57,7 +57,7 @@ export const PROJECT_LENGTHS: { label: string; value: string }[] = [
 // Values are sent to the backend as ?project_type=<value> and matched
 // with icontains so jobs mentioning "ERP" or "CRM" are surfaced.
 export const PROJECT_TYPES: { label: string; value: string }[] = [
-  { label: 'All Types', value: '' },
+  { label: 'All Project Types', value: '' },
   { label: 'ERP', value: 'ERP' },
   { label: 'CRM', value: 'CRM' },
   { label: 'E-Commerce', value: 'e-commerce' },
