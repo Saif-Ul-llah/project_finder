@@ -1,6 +1,6 @@
 // API client for the project_hunting_backend_python Django backend.
-// Backend base URL is dynamic (set via /settings, stored in localStorage)
-// since it changes whenever the Cloudflare tunnel restarts.
+// All requests go through the Next.js proxy (/api/backend/* -> Django /api/*)
+// so the browser stays same-origin (no CORS).
 
 import {
   FilterCatalog,
@@ -12,10 +12,13 @@ import {
   SchedulerResponse,
   Stats,
 } from './types';
-import { getApiBaseUrl } from './api-config';
 
-// The ingestion api-key is required by the trigger/push endpoints. In the
-// admin UI it is stored in localStorage; this reads it at call time.
+import { authHeaders, refreshAccess } from './auth-client';
+
+const BASE = '/api/backend';
+
+// Legacy: the ingestion api-key. Still accepted by the backend for admin
+// endpoints, but the UI now authenticates admins with JWT instead.
 export function getApiKey(): string {
   if (typeof window === 'undefined') return '';
   return localStorage.getItem('ingestion_api_key') || '';
@@ -25,16 +28,16 @@ export function setApiKey(key: string): void {
   if (typeof window !== 'undefined') localStorage.setItem('ingestion_api_key', key);
 }
 
-export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const base = getApiBaseUrl();
-  if (!base) {
-    throw new Error('No backend URL configured. Go to Settings and set your API URL.');
-  }
-
-  const res = await fetch(`${base}/api${path}`, {
+// Shared request wrapper: attaches the JWT (Authorization: Bearer) and retries
+// once after refreshing the access token on a 401.
+export async function request<T>(path: string, options: RequestInit = {}, _retried = false): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
     ...options,
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    headers: { 'Content-Type': 'application/json', ...authHeaders(), ...options.headers },
   });
+  if (res.status === 401 && !_retried) {
+    if (await refreshAccess()) return request<T>(path, options, true);
+  }
   const text = await res.text();
   const data = text ? JSON.parse(text) : {};
   if (!res.ok) {
@@ -55,6 +58,9 @@ export function toQuery(params: Record<string, unknown>): string {
 }
 
 // ---- Reads -----------------------------------------------------------------
+
+// NOTE: paths are intentionally slash-less; the Next proxy appends the
+// trailing slash Django expects (see next.config.mjs).
 
 export function fetchOpportunities(
   filters: OpportunityFilters = {},
@@ -80,13 +86,9 @@ export async function checkHealth(): Promise<boolean> {
 }
 
 // ---- Writes (require api-key) ----------------------------------------------
-// NOTE: trailing slashes below are required. These requests send a custom
-// api-key header, which triggers a CORS preflight (OPTIONS). If Django then
-// 301-redirects (no-slash -> slash), the browser won't follow that redirect
-// on a preflighted request, so the real call silently never arrives.
 
 export function triggerPull(body: Record<string, unknown>): Promise<PullResult> {
-  return request<PullResult>('/ingest/', {
+  return request<PullResult>('/ingest', {
     method: 'POST',
     headers: { 'api-key': getApiKey() },
     body: JSON.stringify(body),
@@ -94,7 +96,7 @@ export function triggerPull(body: Record<string, unknown>): Promise<PullResult> 
 }
 
 export function pushJob(job: Record<string, unknown>): Promise<PushResult> {
-  return request<PushResult>('/ingest/push/', {
+  return request<PushResult>('/ingest/push', {
     method: 'POST',
     headers: { 'api-key': getApiKey() },
     body: JSON.stringify(job),
@@ -108,7 +110,7 @@ export function fetchScheduler(): Promise<SchedulerResponse> {
 }
 
 export function updatePoller(body: Partial<Poller> & { platform: string }): Promise<Poller> {
-  return request<Poller>('/scheduler/', {
+  return request<Poller>('/scheduler', {
     method: 'POST',
     headers: { 'api-key': getApiKey() },
     body: JSON.stringify(body),
