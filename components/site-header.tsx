@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { LayoutGrid, Settings, Target, LogIn, LogOut, User } from 'lucide-react';
+import { Building2, LayoutGrid, LogIn, LogOut, Settings, Target, User } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { getUser, logout, type AuthUser } from '@/lib/auth-client';
 
@@ -30,6 +30,7 @@ export function SiteHeader() {
   const routes = [
     { href: '/projects', label: 'Opportunities', icon: LayoutGrid, show: signedIn },
     { href: '/ranking', label: 'Suggestions', icon: Target, show: signedIn },
+    { href: '/enterprise', label: 'Enterprise', icon: Building2, show: signedIn },
     { href: '/admin', label: 'Admin', icon: Settings, show: signedIn && isAdmin },
   ].filter((r) => r.show);
 
