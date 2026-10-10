@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Briefcase, Trophy } from 'lucide-react';
+import { ArrowRight, Briefcase, Trophy, Settings } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -17,6 +17,11 @@ export default function Home() {
               </Link>
               <Link href="/admin">
                 <Button variant="ghost">Admin</Button>
+              </Link>
+              <Link href="/settings">
+                <Button variant="ghost" size="icon">
+                  <Settings className="h-5 w-5" />
+                </Button>
               </Link>
             </div>
           </div>

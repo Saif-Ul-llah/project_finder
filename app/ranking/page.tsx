@@ -22,23 +22,45 @@ function RankingContent() {
 
   const [search, setSearch] = useState('');
   const [group, setGroup] = useState('');
+  const [platform, setPlatform] = useState('');
   const [techStack, setTechStack] = useState('');
   const [minPriority, setMinPriority] = useState('');
   const [recommendation, setRecommendation] = useState('');
+  const [region, setRegion] = useState('');
+  const [currency, setCurrency] = useState('');
+  const [experience, setExperience] = useState('');
+  const [duration, setDuration] = useState('');
   const [page, setPage] = useState(1);
 
   const filters: RankingFiltersType = useMemo(
     () => ({
       search: search || undefined,
       group: group || undefined,
+      platform: platform || undefined,
       tech_stack: techStack || undefined,
       min_priority: minPriority ? Number(minPriority) : undefined,
       recommendation: recommendation || undefined,
+      region: region || undefined,
+      currency: currency || undefined,
+      experience: experience || undefined,
+      duration: duration || undefined,
       sort: 'priority',
       page,
       page_size: ITEMS_PER_PAGE,
     }),
-    [search, group, techStack, minPriority, recommendation, page],
+    [
+      search,
+      group,
+      platform,
+      techStack,
+      minPriority,
+      recommendation,
+      region,
+      currency,
+      experience,
+      duration,
+      page,
+    ],
   );
 
   useEffect(() => {
@@ -103,13 +125,23 @@ function RankingContent() {
         <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
           <RankingFilters
             group={group}
+            platform={platform}
             techStack={techStack}
             minPriority={minPriority}
             recommendation={recommendation}
+            region={region}
+            currency={currency}
+            experience={experience}
+            duration={duration}
             onGroupChange={(v) => { setGroup(v); resetToFirstPage(); }}
+            onPlatformChange={(v) => { setPlatform(v); resetToFirstPage(); }}
             onTechStackChange={(v) => { setTechStack(v); resetToFirstPage(); }}
             onMinPriorityChange={(v) => { setMinPriority(v); resetToFirstPage(); }}
             onRecommendationChange={(v) => { setRecommendation(v); resetToFirstPage(); }}
+            onRegionChange={(v) => { setRegion(v); resetToFirstPage(); }}
+            onCurrencyChange={(v) => { setCurrency(v); resetToFirstPage(); }}
+            onExperienceChange={(v) => { setExperience(v); resetToFirstPage(); }}
+            onDurationChange={(v) => { setDuration(v); resetToFirstPage(); }}
           />
 
           <div>

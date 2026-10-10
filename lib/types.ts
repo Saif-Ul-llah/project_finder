@@ -43,6 +43,7 @@ export interface Stats {
   total: number;
   by_platform: Record<string, number>;
   by_source: Record<string, number>;
+  by_region: Record<string, number>;
   verified: number;
   hourly: number;
   fixed: number;
@@ -157,6 +158,11 @@ export interface GeneratedProposal {
   bid: number;
   duration: string;
   generated_at: string;
+  // How the AI decided to approach the job, before it wrote anything.
+  // Optional: proposals cached before strategy existed don't carry these.
+  verdict?: string;
+  angle?: string;
+  pricing?: string;
 }
 
 export interface RankingSuggestion {
@@ -173,6 +179,8 @@ export interface RankingSuggestion {
   rating: number | null;
   is_payment_verified: boolean;
   proposals_raw: string | null;
+  difficulty: string | null;
+  time_duration: string | null;
   created_at: string;
   live_priority: number;
   business_score: number | null;
@@ -208,9 +216,14 @@ export interface RankingGroup {
 export interface RankingFilters {
   search?: string;
   group?: string;
+  platform?: string;
   tech_stack?: string;
   min_priority?: number;
   recommendation?: string;
+  region?: string;
+  currency?: string;
+  experience?: string;
+  duration?: string;
   sort?: string;
   page?: number;
   page_size?: number;
@@ -243,6 +256,7 @@ export type TechGroupAdminInput = Omit<TechGroupAdmin, 'id'>;
 export interface RankingConfigAdmin {
   global_instruction: string;
   dead_job_ttl_hours: number;
+  ignored_tech_stack: string[];
   skill_weight: number;
   client_quality_weight: number;
   competition_weight: number;

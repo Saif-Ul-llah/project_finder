@@ -47,7 +47,7 @@ export async function request<T>(path: string, options: RequestInit = {}, _retri
   return data as T;
 }
 
-function toQuery(params: Record<string, unknown>): string {
+export function toQuery(params: Record<string, unknown>): string {
   const qs = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value === undefined || value === null || value === '' || value === false) return;

@@ -4,6 +4,14 @@ import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { RankingGroup } from '@/lib/types';
 import { fetchRankingGroups } from '@/lib/ranking-api';
+import { fetchStats } from '@/lib/api';
+import { CURRENCIES, EXPERIENCE_LEVELS, PROJECT_LENGTHS } from '@/lib/filter-options';
+
+const PLATFORMS = [
+  { label: 'All Sources', value: '' },
+  { label: 'Upwork', value: 'upwork' },
+  { label: 'Freelancer', value: 'freelancer' },
+];
 
 const RECOMMENDATIONS = [
   { label: 'All Recommendations', value: '' },
@@ -16,30 +24,54 @@ const RECOMMENDATIONS = [
 
 interface RankingFiltersProps {
   group: string;
+  platform: string;
   techStack: string;
   minPriority: string;
   recommendation: string;
+  region: string;
+  currency: string;
+  experience: string;
+  duration: string;
   onGroupChange: (v: string) => void;
+  onPlatformChange: (v: string) => void;
   onTechStackChange: (v: string) => void;
   onMinPriorityChange: (v: string) => void;
   onRecommendationChange: (v: string) => void;
+  onRegionChange: (v: string) => void;
+  onCurrencyChange: (v: string) => void;
+  onExperienceChange: (v: string) => void;
+  onDurationChange: (v: string) => void;
 }
 
 export function RankingFilters({
   group,
+  platform,
   techStack,
   minPriority,
   recommendation,
+  region,
+  currency,
+  experience,
+  duration,
   onGroupChange,
+  onPlatformChange,
   onTechStackChange,
   onMinPriorityChange,
   onRecommendationChange,
+  onRegionChange,
+  onCurrencyChange,
+  onExperienceChange,
+  onDurationChange,
 }: RankingFiltersProps) {
   const [groups, setGroups] = useState<RankingGroup[]>([]);
+  const [regionOptions, setRegionOptions] = useState<string[]>([]);
 
   useEffect(() => {
     fetchRankingGroups()
       .then((res) => setGroups(res.results || []))
+      .catch(() => {});
+    fetchStats()
+      .then((s) => setRegionOptions(Object.keys(s.by_region || {}).sort()))
       .catch(() => {});
   }, []);
 
@@ -58,6 +90,92 @@ export function RankingFilters({
           {groups.map((g) => (
             <option key={g.id} value={g.name}>
               {g.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1.5 block">
+          Source
+        </label>
+        <select
+          value={platform}
+          onChange={(e) => onPlatformChange(e.target.value)}
+          className="w-full h-10 rounded-lg border border-border/60 bg-background px-3 text-sm"
+        >
+          {PLATFORMS.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1.5 block">
+          Region
+        </label>
+        <select
+          value={region}
+          onChange={(e) => onRegionChange(e.target.value)}
+          className="w-full h-10 rounded-lg border border-border/60 bg-background px-3 text-sm"
+        >
+          <option value="">All Regions</option>
+          {regionOptions.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1.5 block">
+          Currency
+        </label>
+        <select
+          value={currency}
+          onChange={(e) => onCurrencyChange(e.target.value)}
+          className="w-full h-10 rounded-lg border border-border/60 bg-background px-3 text-sm"
+        >
+          {CURRENCIES.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1.5 block">
+          Experience Level
+        </label>
+        <select
+          value={experience}
+          onChange={(e) => onExperienceChange(e.target.value)}
+          className="w-full h-10 rounded-lg border border-border/60 bg-background px-3 text-sm"
+        >
+          {EXPERIENCE_LEVELS.map((e) => (
+            <option key={e.value} value={e.value}>
+              {e.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1.5 block">
+          Project Length
+        </label>
+        <select
+          value={duration}
+          onChange={(e) => onDurationChange(e.target.value)}
+          className="w-full h-10 rounded-lg border border-border/60 bg-background px-3 text-sm"
+        >
+          {PROJECT_LENGTHS.map((d) => (
+            <option key={d.value} value={d.value}>
+              {d.label}
             </option>
           ))}
         </select>

@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   ExternalLink,
   Sparkles,
+  Compass,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -146,6 +147,33 @@ export default function ProposalPage() {
               <span className="capitalize">{job.job_type || 'unknown'} price</span>
             </div>
           </div>
+        )}
+
+        {/* The call the AI made before it wrote anything, so it can be argued with. */}
+        {!generating && proposal?.angle && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Compass className="w-4 h-4 text-primary" /> Strategy
+              </CardTitle>
+              <CardDescription>
+                How the AI decided to approach this job. Disagree with it and regenerate,
+                or just edit the letter below.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3 text-sm">
+              {[
+                { label: 'Verdict', value: proposal.verdict },
+                { label: 'Lead with', value: proposal.angle },
+                { label: 'Pricing', value: proposal.pricing },
+              ].map(({ label, value }) => (
+                <div key={label} className="grid grid-cols-[6.5rem_1fr] gap-3">
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className="text-foreground">{value}</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         )}
 
         {/* AI-suggested bid parameters */}
