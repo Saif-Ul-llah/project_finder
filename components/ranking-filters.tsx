@@ -5,13 +5,8 @@ import { Input } from '@/components/ui/input';
 import { RankingGroup } from '@/lib/types';
 import { fetchRankingGroups } from '@/lib/ranking-api';
 import { fetchStats } from '@/lib/api';
-import { CURRENCIES, EXPERIENCE_LEVELS, PROJECT_LENGTHS } from '@/lib/filter-options';
+import { CURRENCIES, EXPERIENCE_LEVELS, PLATFORMS, PROJECT_LENGTHS } from '@/lib/filter-options';
 
-const PLATFORMS = [
-  { label: 'All Sources', value: '' },
-  { label: 'Upwork', value: 'upwork' },
-  { label: 'Freelancer', value: 'freelancer' },
-];
 
 const RECOMMENDATIONS = [
   { label: 'All Recommendations', value: '' },

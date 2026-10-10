@@ -8,26 +8,17 @@ import { OpportunityCard } from '@/components/opportunity-card';
 import { Loader2, AlertCircle, RefreshCw, ShieldCheck } from 'lucide-react';
 import { Opportunity, OpportunitiesResponse, OpportunityFilters } from '@/lib/types';
 import { fetchOpportunities, fetchStats } from '@/lib/api';
-import { readCache, writeCache } from '@/lib/cache';
+import { filterCacheKey, readCache, writeCache } from '@/lib/cache';
 import { useLiveUpdates } from '@/hooks/use-live-updates';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { CURRENCIES, EXPERIENCE_LEVELS, PROJECT_LENGTHS, PROJECT_TYPES, TECH_STACKS } from '@/lib/filter-options';
+import { ActiveFilterChips } from '@/components/filters/active-filter-chips';
+import { FilterDrawer } from '@/components/filters/filter-drawer';
+import { PLATFORMS } from '@/lib/filter-options';
+import type { FilterValues } from '@/lib/filter-schema';
 
 const ITEMS_PER_PAGE = 12;
-
-const PLATFORMS = [
-  { label: 'All Platforms', value: '' },
-  { label: 'Upwork', value: 'upwork' },
-  { label: 'Freelancer', value: 'freelancer' },
-];
-
-const JOB_TYPES = [
-  { label: 'All Types', value: '' },
-  { label: 'Hourly', value: 'hourly' },
-  { label: 'Fixed', value: 'fixed' },
-];
 
 function OpportunitiesContent() {
   const [items, setItems] = useState<Opportunity[]>([]);
@@ -38,28 +29,36 @@ function OpportunitiesContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Filter state
+  // One object rather than a useState per filter: the drawer takes a single
+  // patch callback, which also centralises the page reset that used to be
+  // repeated on all thirteen handlers.
+  const [values, setValues] = useState<FilterValues>({});
   const [search, setSearch] = useState('');
-  const [platform, setPlatform] = useState('');
-  const [jobType, setJobType] = useState('');
-  const [source, setSource] = useState('');
-  const [verified, setVerified] = useState(false);
-  const [minBudget, setMinBudget] = useState('');
-  const [maxBudget, setMaxBudget] = useState('');
-  const [region, setRegion] = useState('');
-  const [currency, setCurrency] = useState('');
-  const [experience, setExperience] = useState('');
-  const [duration, setDuration] = useState('');
-  const [projectType, setProjectType] = useState('');
-  const [techStack, setTechStack] = useState('');
   const [sort, setSort] = useState('newest');
   const [page, setPage] = useState(1);
+
+  const updateFilters = useCallback((patch: Partial<FilterValues>) => {
+    setValues((current) => ({ ...current, ...patch }));
+    setPage(1);
+  }, []);
+
+  const resetFilters = useCallback(() => {
+    setValues({});
+    setPage(1);
+  }, []);
 
   // Source and region options come from the live data (stats.by_source /
   // stats.by_region) rather than a fixed list, so they always match what has
   // actually been ingested.
   const [sourceOptions, setSourceOptions] = useState<string[]>([]);
   const [regionOptions, setRegionOptions] = useState<string[]>([]);
+  const dynamicOptions = useMemo(
+    () => ({
+      source: sourceOptions.map((v) => ({ label: v, value: v })),
+      region: regionOptions.map((v) => ({ label: v, value: v })),
+    }),
+    [sourceOptions, regionOptions],
+  );
   useEffect(() => {
     fetchStats()
       .then((s) => {
@@ -71,43 +70,19 @@ function OpportunitiesContent() {
 
   const filters: OpportunityFilters = useMemo(
     () => ({
+      ...values,
       search: search || undefined,
-      platform: platform || undefined,
-      job_type: (jobType as 'hourly' | 'fixed') || undefined,
-      source: source || undefined,
-      verified: verified || undefined,
-      min_budget: minBudget ? Number(minBudget) : undefined,
-      max_budget: maxBudget ? Number(maxBudget) : undefined,
-      region: region || undefined,
-      currency: currency || undefined,
-      experience: experience || undefined,
-      duration: duration || undefined,
-      project_type: projectType || undefined,
-      tech_stack: techStack || undefined,
       sort,
       page,
       page_size: ITEMS_PER_PAGE,
     }),
-    [
-      search,
-      platform,
-      jobType,
-      source,
-      verified,
-      minBudget,
-      maxBudget,
-      region,
-      currency,
-      experience,
-      duration,
-      projectType,
-      techStack,
-      sort,
-      page,
-    ],
+    [values, search, sort, page],
   );
 
-  const cacheKey = useMemo(() => `opps:${JSON.stringify(filters)}`, [filters]);
+  // filterCacheKey sorts the keys. `values` is spread-patched, so its key
+  // order follows the order the controls were touched, and a plain
+  // JSON.stringify would produce different keys for identical filters.
+  const cacheKey = useMemo(() => filterCacheKey('opps', filters), [filters]);
 
   useEffect(() => {
     let cancelled = false;
@@ -182,7 +157,7 @@ function OpportunitiesContent() {
             Opportunities
           </h1>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl">
-            Aggregated from Upwork &amp; Freelancer, normalized and deduplicated by your backend.
+            Aggregated from {PLATFORMS.filter((p) => p.value).map((p) => p.label).join(', ')} — normalized and deduplicated by your backend.
           </p>
         </div>
       </div>
@@ -193,154 +168,24 @@ function OpportunitiesContent() {
           <SearchBar placeholder="Search opportunities..." onSearch={handleSearch} defaultValue={search} />
         </div>
 
-        {/* Filter bar */}
+        {/* Active filters, then the controls behind a trigger. Thirteen
+            controls inline left no room for labels and wrapped into ragged
+            rows; chips keep what is applied visible without the bulk. */}
+        <ActiveFilterChips
+          values={values}
+          onChange={updateFilters}
+          onReset={resetFilters}
+          dynamicOptions={dynamicOptions}
+        />
+
         <div className="flex flex-wrap items-center gap-3 mb-6">
-          {/* Platform dropdown */}
-          <select
-            value={platform}
-            onChange={(e) => { setPlatform(e.target.value); resetToFirstPage(); }}
-            className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
-            title="Filter by platform"
-          >
-            {PLATFORMS.map((p) => (
-              <option key={p.value} value={p.value}>{p.label}</option>
-            ))}
-          </select>
-
-          {/* Job type */}
-          <div className="flex rounded-lg border border-border/60 bg-card p-1">
-            {JOB_TYPES.map((t) => (
-              <button
-                key={t.value}
-                onClick={() => { setJobType(t.value); resetToFirstPage(); }}
-                className={`px-3 h-8 rounded-md text-sm font-medium transition-colors ${
-                  jobType === t.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Project type dropdown */}
-          <select
-            value={projectType}
-            onChange={(e) => { setProjectType(e.target.value); resetToFirstPage(); }}
-            className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
-            title="Filter by project type"
-          >
-            {PROJECT_TYPES.map((pt) => (
-              <option key={pt.value} value={pt.value}>{pt.label}</option>
-            ))}
-          </select>
-
-          {/* Tech stack dropdown */}
-          <select
-            value={techStack}
-            onChange={(e) => { setTechStack(e.target.value); resetToFirstPage(); }}
-            className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
-            title="Filter by tech stack"
-          >
-            {TECH_STACKS.map((ts) => (
-              <option key={ts.value} value={ts.value}>{ts.label}</option>
-            ))}
-          </select>
-
-          {/* Project duration dropdown */}
-          <select
-            value={duration}
-            onChange={(e) => { setDuration(e.target.value); resetToFirstPage(); }}
-            className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
-            title="Filter by project duration"
-          >
-            {PROJECT_LENGTHS.map((d) => (
-              <option key={d.value} value={d.value}>{d.label}</option>
-            ))}
-          </select>
-
-          {/* Source filter (scraper / notification / api / push ...) */}
-          {sourceOptions.length > 0 && (
-            <select
-              value={source}
-              onChange={(e) => { setSource(e.target.value); resetToFirstPage(); }}
-              className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground capitalize"
-              title="Filter by ingestion source"
-            >
-              <option value="">All Sources</option>
-              {sourceOptions.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          )}
-
-          {/* Client region filter — options come from stats.by_region */}
-          {regionOptions.length > 0 && (
-            <select
-              value={region}
-              onChange={(e) => { setRegion(e.target.value); resetToFirstPage(); }}
-              className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
-              title="Filter by client region"
-            >
-              <option value="">All Regions</option>
-              {regionOptions.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-          )}
-
-          {/* Currency filter */}
-          <select
-            value={currency}
-            onChange={(e) => { setCurrency(e.target.value); resetToFirstPage(); }}
-            className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
-            title="Filter by budget currency"
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
-
-          {/* Experience level filter */}
-          <select
-            value={experience}
-            onChange={(e) => { setExperience(e.target.value); resetToFirstPage(); }}
-            className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
-            title="Filter by experience level"
-          >
-            {EXPERIENCE_LEVELS.map((e) => (
-              <option key={e.value} value={e.value}>{e.label}</option>
-            ))}
-          </select>
-
-          {/* Verified toggle */}
-          <Button
-            variant={verified ? 'default' : 'outline'}
-            size="sm"
-            className="gap-2 h-10"
-            onClick={() => { setVerified((v) => !v); resetToFirstPage(); }}
-          >
-            <ShieldCheck className="w-4 h-4" />
-            Verified only
-          </Button>
-
-          {/* Budget range */}
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              placeholder="Min $"
-              value={minBudget}
-              onChange={(e) => { setMinBudget(e.target.value); resetToFirstPage(); }}
-              className="w-24 h-10"
-            />
-            <span className="text-muted-foreground">–</span>
-            <Input
-              type="number"
-              placeholder="Max $"
-              value={maxBudget}
-              onChange={(e) => { setMaxBudget(e.target.value); resetToFirstPage(); }}
-              className="w-24 h-10"
-            />
-          </div>
+          <FilterDrawer
+            values={values}
+            onChange={updateFilters}
+            onReset={resetFilters}
+            resultCount={total}
+            dynamicOptions={dynamicOptions}
+          />
 
           <div className="ml-auto flex items-center gap-3">
             <button

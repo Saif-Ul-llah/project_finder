@@ -28,6 +28,8 @@ export interface Opportunity {
   source_strategy: string | null;
   content_hash: string;
   posted_raw: string | null;
+  // Submission deadline, ISO-8601. Only tenders carry one today.
+  deadline: string | null;
   created_at: string;
 }
 
@@ -79,6 +81,8 @@ export interface OpportunityFilters {
   duration?: string;
   project_type?: string;
   tech_stack?: string;
+  closing_within?: number;
+  hide_expired?: boolean;
   sort?: string;
   page?: number;
   page_size?: number;
