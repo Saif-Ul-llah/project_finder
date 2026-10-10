@@ -13,7 +13,7 @@ export const config = {
 const ACCESS_COOKIE = 'pf_access';
 const ROLE_COOKIE = 'pf_role';
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hasToken = !!req.cookies.get(ACCESS_COOKIE)?.value;
   const role = req.cookies.get(ROLE_COOKIE)?.value;
