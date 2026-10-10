@@ -55,11 +55,17 @@ function OpportunitiesContent() {
   const [sort, setSort] = useState('newest');
   const [page, setPage] = useState(1);
 
-  // Available source values (populated from stats.by_source) for the filter.
+  // Source and region options come from the live data (stats.by_source /
+  // stats.by_region) rather than a fixed list, so they always match what has
+  // actually been ingested.
   const [sourceOptions, setSourceOptions] = useState<string[]>([]);
+  const [regionOptions, setRegionOptions] = useState<string[]>([]);
   useEffect(() => {
     fetchStats()
-      .then((s) => setSourceOptions(Object.keys(s.by_source || {})))
+      .then((s) => {
+        setSourceOptions(Object.keys(s.by_source || {}));
+        setRegionOptions(Object.keys(s.by_region || {}).sort());
+      })
       .catch(() => {});
   }, [refreshKey]);
 
@@ -263,6 +269,21 @@ function OpportunitiesContent() {
               <option value="">All Sources</option>
               {sourceOptions.map((s) => (
                 <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          )}
+
+          {/* Client region filter — options come from stats.by_region */}
+          {regionOptions.length > 0 && (
+            <select
+              value={region}
+              onChange={(e) => { setRegion(e.target.value); resetToFirstPage(); }}
+              className="h-10 rounded-lg border border-border/60 bg-card px-3 text-sm font-medium text-foreground"
+              title="Filter by client region"
+            >
+              <option value="">All Regions</option>
+              {regionOptions.map((r) => (
+                <option key={r} value={r}>{r}</option>
               ))}
             </select>
           )}
