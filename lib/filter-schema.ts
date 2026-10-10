@@ -156,3 +156,37 @@ export function chipLabel(
   const text = match?.label ?? raw;
   return field.prefixChip ? `${field.label}: ${text}` : text;
 }
+
+/** Deadline windows for listings whose rows close on a date. */
+export const CLOSING_WINDOWS: Option[] = [
+  { label: 'Any deadline', value: '' },
+  { label: 'Closing within 7 days', value: '7' },
+  { label: 'Closing within 14 days', value: '14' },
+  { label: 'Closing within 30 days', value: '30' },
+  { label: 'Closing within 90 days', value: '90' },
+];
+
+/**
+ * The enterprise filter set: everything above plus the deadline controls.
+ *
+ * Kept separate rather than added to OPPORTUNITY_FILTERS and hidden on
+ * /projects, because every deadline in the marketplace feed is null — the
+ * controls would be present but incapable of changing anything.
+ */
+export const ENTERPRISE_FILTERS: FilterField[] = [
+  ...OPPORTUNITY_FILTERS,
+  {
+    id: 'closing_within',
+    label: 'Deadline',
+    group: 'basics',
+    control: 'select',
+    options: CLOSING_WINDOWS,
+  },
+  {
+    id: 'hide_expired',
+    label: 'Hide closed',
+    group: 'basics',
+    control: 'switch',
+  },
+];
+

@@ -8,12 +8,21 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+interface SortOption {
+  label: string;
+  value: string;
+}
+
 interface SortingSelectProps {
   onSortChange: (value: string) => void;
   value?: string;
+  /** Override the option list. A page whose rows carry deadlines passes
+   *  DEADLINE_SORT_OPTIONS; offering those everywhere would list sorts that
+   *  do nothing on a feed where every deadline is null. */
+  options?: SortOption[];
 }
 
-const SORT_OPTIONS = [
+export const SORT_OPTIONS: SortOption[] = [
   { label: 'Newest First', value: 'newest' },
   { label: 'Oldest First', value: 'oldest' },
   { label: 'Budget: High to Low', value: 'budget_high' },
@@ -22,9 +31,17 @@ const SORT_OPTIONS = [
   { label: 'Highest Rating', value: 'rating' },
 ];
 
+/** Sorts for listings whose rows have a submission deadline. */
+export const DEADLINE_SORT_OPTIONS: SortOption[] = [
+  { label: 'Closing Soonest', value: 'deadline_soon' },
+  { label: 'Closing Latest', value: 'deadline_late' },
+  ...SORT_OPTIONS,
+];
+
 export function SortingSelect({
   onSortChange,
   value = 'newest',
+  options = SORT_OPTIONS,
 }: SortingSelectProps) {
   return (
     <Select value={value} onValueChange={onSortChange}>
@@ -32,7 +49,7 @@ export function SortingSelect({
         <SelectValue placeholder="Sort by..." />
       </SelectTrigger>
       <SelectContent>
-        {SORT_OPTIONS.map((option) => (
+        {options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
             {option.label}
           </SelectItem>
