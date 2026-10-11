@@ -171,24 +171,37 @@ export function OpportunityCard({ opportunity: o }: { opportunity: Opportunity }
             </p>
           )}
 
-          {o.tech_stack?.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-auto pt-2">
-              {o.tech_stack.slice(0, 8).map((skill) => (
-                <Badge
-                  key={skill}
-                  variant="outline"
-                  className="text-xs bg-secondary/50 border-0 rounded-full"
-                >
-                  {skill}
-                </Badge>
-              ))}
-              {o.tech_stack.length > 8 && (
-                <Badge variant="outline" className="text-xs rounded-full">
-                  +{o.tech_stack.length - 8}
-                </Badge>
-              )}
-            </div>
-          )}
+
+          {(() => {
+            const techStack: string[] = Array.isArray(o.tech_stack)
+              ? o.tech_stack.filter(
+                  (skill): skill is string => typeof skill === 'string'
+                )
+              : typeof o.tech_stack === 'string'
+                ? o.tech_stack.split(',').map((skill) => skill.trim()).filter(Boolean)
+                : [];
+
+            return techStack.length > 0 ? (
+              <div className="flex flex-wrap gap-2 mt-auto pt-2">
+                {techStack.slice(0, 8).map((skill, index) => (
+                  <Badge
+                    key={`${skill}-${index}`}
+                    variant="outline"
+                    className="text-xs bg-secondary/50 border-0 rounded-full"
+                  >
+                    {skill}
+                  </Badge>
+                ))}
+
+                {techStack.length > 8 && (
+                  <Badge variant="outline" className="text-xs rounded-full">
+                    +{techStack.length - 8}
+                  </Badge>
+                )}
+              </div>
+            ) : null;
+          })()}
+
 
           <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-3 border-t border-border/40">
             {o.client_country && (
