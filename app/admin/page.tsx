@@ -49,7 +49,7 @@ import {
   setApiKey as persistApiKey,
 } from '@/lib/api';
 import { Stats, PullResult, FilterCatalog, Poller } from '@/lib/types';
-import { logout, getUser } from '@/lib/auth-client';
+import { logout } from '@/lib/auth-client';
 import { previewOldJobs, deleteOldJobs } from '@/lib/users-api';
 
 export default function AdminPage() {

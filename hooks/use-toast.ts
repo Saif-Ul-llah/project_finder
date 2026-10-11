@@ -15,12 +15,14 @@ type ToasterToast = ToastProps & {
   action?: ToastActionElement
 }
 
-const actionTypes = {
-  ADD_TOAST: 'ADD_TOAST',
-  UPDATE_TOAST: 'UPDATE_TOAST',
-  DISMISS_TOAST: 'DISMISS_TOAST',
-  REMOVE_TOAST: 'REMOVE_TOAST',
-} as const
+// Only ever consumed as a type (see ActionType below) — the runtime object
+// was never read, so this is a type alias rather than a const.
+type ActionTypes = {
+  ADD_TOAST: 'ADD_TOAST'
+  UPDATE_TOAST: 'UPDATE_TOAST'
+  DISMISS_TOAST: 'DISMISS_TOAST'
+  REMOVE_TOAST: 'REMOVE_TOAST'
+}
 
 let count = 0
 
@@ -29,7 +31,7 @@ function genId() {
   return count.toString()
 }
 
-type ActionType = typeof actionTypes
+type ActionType = ActionTypes
 
 type Action =
   | {
