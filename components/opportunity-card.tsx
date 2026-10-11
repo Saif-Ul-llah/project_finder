@@ -1,6 +1,7 @@
 'use client';
 
 import { Opportunity } from '@/lib/types';
+import { platformLabel } from '@/lib/filter-options';
 import { Badge } from '@/components/ui/badge';
 import {
   CalendarClock,
@@ -21,6 +22,8 @@ const PLATFORM_STYLES: Record<string, string> = {
   workana: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
   freelancermap: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
   tender: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
+  uk_tender: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
+  sam_gov: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
 };
 
 /** Days until `iso`, negative when past. */
@@ -106,9 +109,9 @@ export function OpportunityCard({ opportunity: o }: { opportunity: Opportunity }
           <div className="flex flex-wrap items-center gap-1.5 mb-3">
             <Badge
               variant="outline"
-              className={`text-xs rounded-full capitalize ${PLATFORM_STYLES[o.platform] || ''}`}
+              className={`text-xs rounded-full ${PLATFORM_STYLES[o.platform] || ''}`}
             >
-              {o.platform}
+              {platformLabel(o.platform)}
             </Badge>
             {o.job_type && (
               <Badge variant="secondary" className="text-xs rounded-full capitalize">
