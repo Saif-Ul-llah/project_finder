@@ -10,9 +10,11 @@ const BACKEND_API_URL =
   'https://projecthuntingbackendpython-production.up.railway.app'
 
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  // NOTE: `typescript.ignoreBuildErrors` is deliberately absent. It used to be
+  // true, which meant `next build` happily shipped type errors — and the only
+  // errors it was hiding came from four card components that nothing
+  // imported. With those deleted the tree typechecks clean, so the build is
+  // the gate again. Do not re-add this flag to get a red build green.
   allowedDevOrigins: ['localhost', '127.0.0.1'],
   images: {
     unoptimized: true,
