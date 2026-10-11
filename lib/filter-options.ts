@@ -107,12 +107,14 @@ export const PLATFORMS: { label: string; value: string }[] = [
   { label: 'Workana', value: 'workana' },
   { label: 'Freelancermap', value: 'freelancermap' },
   { label: 'Tender', value: 'tender' },
+  { label: 'UK Find a Tender', value: 'uk_tender' },
+  { label: 'SAM.gov', value: 'sam_gov' },
 ];
 
 // Platforms shown on /enterprise. A list, so more large-organisation sources
 // can join without touching the page — the backend accepts a comma-separated
 // ?platform= value.
-export const ENTERPRISE_PLATFORMS = ['tender'] as const;
+export const ENTERPRISE_PLATFORMS = ['tender', 'uk_tender', 'sam_gov'] as const;
 export const ENTERPRISE_PLATFORM_PARAM = ENTERPRISE_PLATFORMS.join(',');
 
 /** Human label for a platform slug, falling back to the slug itself. */
