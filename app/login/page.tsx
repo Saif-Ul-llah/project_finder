@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Lock, Loader2, ShieldAlert } from 'lucide-react';
+import { Clock, Lock, Loader2, ShieldAlert } from 'lucide-react';
 import { login } from '@/lib/auth-client';
 
 function LoginForm() {
@@ -57,6 +57,16 @@ function LoginForm() {
             <Alert variant="destructive" className="mb-4">
               <ShieldAlert className="h-4 w-4" />
               <AlertDescription>Admin access is required for that page.</AlertDescription>
+            </Alert>
+          )}
+          {/* Set by endSession() when the refresh token itself was rejected,
+              so the user knows this was a timeout and not a lost password. */}
+          {params.get('expired') === '1' && (
+            <Alert className="mb-4">
+              <Clock className="h-4 w-4" />
+              <AlertDescription>
+                Your session expired. Sign in again to pick up where you left off.
+              </AlertDescription>
             </Alert>
           )}
           <form onSubmit={submit} className="space-y-4">

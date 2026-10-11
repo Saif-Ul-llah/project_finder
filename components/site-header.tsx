@@ -7,12 +7,16 @@ import { cn } from '@/lib/utils';
 import { Building2, LayoutGrid, LogIn, LogOut, Settings, Target, User } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { getUser, logout, type AuthUser } from '@/lib/auth-client';
+import { useSessionRefresh } from '@/hooks/use-session-refresh';
 
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  // In the root layout, so this is the one place that runs on every page.
+  useSessionRefresh();
 
   // Read auth cookies only after mount to avoid hydration mismatch.
   useEffect(() => {
