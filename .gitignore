@@ -24,3 +24,4 @@ node_modules_electron
 node_modules_electron
 # TypeScript build artifacts
 *.tsbuildinfo
+config.bat
