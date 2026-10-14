@@ -4,15 +4,19 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { LayoutGrid, Settings, Target, LogIn, LogOut, User } from 'lucide-react';
+import { Building2, LayoutGrid, LogIn, LogOut, Settings, Target, User } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { getUser, logout, type AuthUser } from '@/lib/auth-client';
+import { useSessionRefresh } from '@/hooks/use-session-refresh';
 
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  // In the root layout, so this is the one place that runs on every page.
+  useSessionRefresh();
 
   // Read auth cookies only after mount to avoid hydration mismatch.
   useEffect(() => {
@@ -21,11 +25,17 @@ export function SiteHeader() {
   }, [pathname]);
 
   const isAdmin = user?.role === 'admin';
+  // `mounted` gates on cookies being readable; before that we render neither
+  // state, so the server and first client paint agree.
+  const signedIn = mounted && !!user;
 
+  // Every destination below is behind the proxy's auth gate, so showing them
+  // to a signed-out visitor only produces a bounce to /login.
   const routes = [
-    { href: '/projects', label: 'Opportunities', icon: LayoutGrid, show: true },
-    { href: '/ranking', label: 'Suggestions', icon: Target, show: true },
-    { href: '/admin', label: 'Admin', icon: Settings, show: isAdmin },
+    { href: '/projects', label: 'Opportunities', icon: LayoutGrid, show: signedIn },
+    { href: '/ranking', label: 'Suggestions', icon: Target, show: signedIn },
+    { href: '/enterprise', label: 'Enterprise', icon: Building2, show: signedIn },
+    { href: '/admin', label: 'Admin', icon: Settings, show: signedIn && isAdmin },
   ].filter((r) => r.show);
 
   const handleLogout = () => {
@@ -39,7 +49,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 flex h-16 items-center">
         <div className="mr-8 flex items-center">
-          <Link href="/projects" className="flex items-center space-x-2">
+          <Link href={signedIn ? '/projects' : '/'} className="flex items-center space-x-2">
             <span className="font-extrabold text-xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">
               ProjectFinder
             </span>
@@ -81,12 +91,20 @@ export function SiteHeader() {
                 </button>
               </>
             ) : mounted ? (
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <LogIn className="w-4 h-4" /> Sign in
-              </Link>
+              <>
+                <Link
+                  href="/register"
+                  className="hidden sm:inline-flex text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Create account
+                </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  <LogIn className="w-4 h-4" /> Sign in
+                </Link>
+              </>
             ) : null}
             <ThemeToggle />
           </div>

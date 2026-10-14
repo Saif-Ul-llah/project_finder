@@ -57,7 +57,7 @@ export const PROJECT_LENGTHS: { label: string; value: string }[] = [
 // Values are sent to the backend as ?project_type=<value> and matched
 // with icontains so jobs mentioning "ERP" or "CRM" are surfaced.
 export const PROJECT_TYPES: { label: string; value: string }[] = [
-  { label: 'All Types', value: '' },
+  { label: 'All Project Types', value: '' },
   { label: 'ERP', value: 'ERP' },
   { label: 'CRM', value: 'CRM' },
   { label: 'E-Commerce', value: 'e-commerce' },
@@ -94,3 +94,30 @@ export const TECH_STACKS: { label: string; value: string }[] = [
   { label: 'Salesforce', value: 'Salesforce' },
   { label: 'Power BI', value: 'Power BI' },
 ];
+
+// Mirrors app/platforms/registry.py in the backend — keep them in step when
+// adding a platform. Static rather than fetched: the list only changes when
+// an adapter is written, and a dropdown that must render on first paint
+// shouldn't carry a loading state for it.
+export const PLATFORMS: { label: string; value: string }[] = [
+  { label: 'All Platforms', value: '' },
+  { label: 'Upwork', value: 'upwork' },
+  { label: 'Freelancer', value: 'freelancer' },
+  { label: 'Fiverr', value: 'fiverr' },
+  { label: 'Workana', value: 'workana' },
+  { label: 'Freelancermap', value: 'freelancermap' },
+  { label: 'Tender', value: 'tender' },
+  { label: 'UK Find a Tender', value: 'uk_tender' },
+  { label: 'SAM.gov', value: 'sam_gov' },
+];
+
+// Platforms shown on /enterprise. A list, so more large-organisation sources
+// can join without touching the page — the backend accepts a comma-separated
+// ?platform= value.
+export const ENTERPRISE_PLATFORMS = ['tender', 'uk_tender', 'sam_gov'] as const;
+export const ENTERPRISE_PLATFORM_PARAM = ENTERPRISE_PLATFORMS.join(',');
+
+/** Human label for a platform slug, falling back to the slug itself. */
+export function platformLabel(slug: string): string {
+  return PLATFORMS.find((p) => p.value === slug)?.label ?? slug;
+}

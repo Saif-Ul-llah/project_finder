@@ -13,7 +13,13 @@ import {
   Stats,
 } from './types';
 
-import { authHeaders, refreshAccess } from './auth-client';
+import {
+  authHeaders,
+  endSession,
+  ensureFreshAccess,
+  hasSession,
+  refreshAccessDetailed,
+} from './auth-client';
 
 const BASE = '/api/backend';
 
@@ -28,15 +34,26 @@ export function setApiKey(key: string): void {
   if (typeof window !== 'undefined') localStorage.setItem('ingestion_api_key', key);
 }
 
-// Shared request wrapper: attaches the JWT (Authorization: Bearer) and retries
-// once after refreshing the access token on a 401.
+// Shared request wrapper: attaches the JWT (Authorization: Bearer).
+//
+// Renews the access token *before* the request when it is close to expiring,
+// and still retries once on a 401 as a backstop for the cases the pre-check
+// cannot see — a token revoked server-side, or a browser clock far enough off
+// that the local expiry calculation is wrong.
 export async function request<T>(path: string, options: RequestInit = {}, _retried = false): Promise<T> {
+  if (!_retried) await ensureFreshAccess();
+
   const res = await fetch(`${BASE}${path}`, {
     ...options,
     headers: { 'Content-Type': 'application/json', ...authHeaders(), ...options.headers },
   });
   if (res.status === 401 && !_retried) {
-    if (await refreshAccess()) return request<T>(path, options, true);
+    const outcome = await refreshAccessDetailed();
+    if (outcome === 'ok') return request<T>(path, options, true);
+    // Only a refresh the backend actually *rejected* ends the session. An
+    // unreachable backend must not log anyone out, and an anonymous caller
+    // hitting a protected endpoint just gets the error.
+    if (outcome === 'rejected' && hasSession()) endSession();
   }
   const text = await res.text();
   const data = text ? JSON.parse(text) : {};

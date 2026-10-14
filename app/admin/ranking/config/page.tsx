@@ -45,7 +45,8 @@ export default function RankingConfigPage() {
     setError(null);
     setSaved(false);
     try {
-      const { updated_at, ...body } = config;
+      // updated_at is server-owned; strip it rather than echo it back.
+      const { updated_at: _updated_at, ...body } = config;
       const updated = await updateAdminRankingConfig(body);
       setConfig(updated);
       setSaved(true);

@@ -5,13 +5,7 @@ import { Input } from '@/components/ui/input';
 import { RankingGroup } from '@/lib/types';
 import { fetchRankingGroups } from '@/lib/ranking-api';
 import { fetchStats } from '@/lib/api';
-import { CURRENCIES, EXPERIENCE_LEVELS, PROJECT_LENGTHS } from '@/lib/filter-options';
-
-const PLATFORMS = [
-  { label: 'All Sources', value: '' },
-  { label: 'Upwork', value: 'upwork' },
-  { label: 'Freelancer', value: 'freelancer' },
-];
+import { CURRENCIES, EXPERIENCE_LEVELS, PLATFORMS, PROJECT_LENGTHS } from '@/lib/filter-options';
 
 const RECOMMENDATIONS = [
   { label: 'All Recommendations', value: '' },
@@ -32,6 +26,7 @@ interface RankingFiltersProps {
   currency: string;
   experience: string;
   duration: string;
+  enterprise: string;
   onGroupChange: (v: string) => void;
   onPlatformChange: (v: string) => void;
   onTechStackChange: (v: string) => void;
@@ -41,6 +36,7 @@ interface RankingFiltersProps {
   onCurrencyChange: (v: string) => void;
   onExperienceChange: (v: string) => void;
   onDurationChange: (v: string) => void;
+  onEnterpriseChange: (v: string) => void;
 }
 
 export function RankingFilters({
@@ -53,6 +49,7 @@ export function RankingFilters({
   currency,
   experience,
   duration,
+  enterprise,
   onGroupChange,
   onPlatformChange,
   onTechStackChange,
@@ -62,6 +59,7 @@ export function RankingFilters({
   onCurrencyChange,
   onExperienceChange,
   onDurationChange,
+  onEnterpriseChange,
 }: RankingFiltersProps) {
   const [groups, setGroups] = useState<RankingGroup[]>([]);
   const [regionOptions, setRegionOptions] = useState<string[]>([]);
@@ -69,10 +67,10 @@ export function RankingFilters({
   useEffect(() => {
     fetchRankingGroups()
       .then((res) => setGroups(res.results || []))
-      .catch(() => {});
+      .catch(() => { });
     fetchStats()
       .then((s) => setRegionOptions(Object.keys(s.by_region || {}).sort()))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   return (
@@ -109,6 +107,21 @@ export function RankingFilters({
               {p.label}
             </option>
           ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1.5 block">
+          Enterprise Projects
+        </label>
+        <select
+          value={enterprise}
+          onChange={(e) => onEnterpriseChange(e.target.value)}
+          className="w-full h-10 rounded-lg border border-border/60 bg-background px-3 text-sm"
+        >
+          <option value="">All</option>
+          <option value="true">Enterprise only</option>
+          <option value="false">Exclude enterprise</option>
         </select>
       </div>
 
