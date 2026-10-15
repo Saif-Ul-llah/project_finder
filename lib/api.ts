@@ -1,6 +1,7 @@
 // API client for the project_hunting_backend_python Django backend.
-// All requests go through the Next.js proxy (/api/backend/* -> Django /api/*)
-// so the browser stays same-origin (no CORS).
+// Requests go to the backend picked in the header (lib/backend.ts): by default
+// the same-origin Next.js proxy (/api/backend/* -> Django /api/*), or a tunnel
+// / localhost URL called directly.
 
 import {
   FilterCatalog,
@@ -20,8 +21,7 @@ import {
   hasSession,
   refreshAccessDetailed,
 } from './auth-client';
-
-const BASE = '/api/backend';
+import { backendFetch } from './backend';
 
 // Legacy: the ingestion api-key. Still accepted by the backend for admin
 // endpoints, but the UI now authenticates admins with JWT instead.
@@ -43,7 +43,7 @@ export function setApiKey(key: string): void {
 export async function request<T>(path: string, options: RequestInit = {}, _retried = false): Promise<T> {
   if (!_retried) await ensureFreshAccess();
 
-  const res = await fetch(`${BASE}${path}`, {
+  const res = await backendFetch(path, {
     ...options,
     headers: { 'Content-Type': 'application/json', ...authHeaders(), ...options.headers },
   });
@@ -76,8 +76,8 @@ export function toQuery(params: Record<string, unknown>): string {
 
 // ---- Reads -----------------------------------------------------------------
 
-// NOTE: paths are intentionally slash-less; the Next proxy appends the
-// trailing slash Django expects (see next.config.mjs).
+// NOTE: paths are intentionally slash-less; backendUrl() (or the Next proxy)
+// appends the trailing slash Django expects.
 
 export function fetchOpportunities(
   filters: OpportunityFilters = {},

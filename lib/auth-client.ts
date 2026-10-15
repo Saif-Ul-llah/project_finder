@@ -1,4 +1,4 @@
-// Client-side JWT auth against the Django backend (via the /api/backend proxy).
+// Client-side JWT auth against the selected Django backend (lib/backend.ts).
 //
 // Tokens live in cookies (not httpOnly) so BOTH the browser fetch (to set the
 // Authorization header) and the edge proxy (to gate routes) can read them.
@@ -15,12 +15,12 @@
 // session the UI believes is live) nor die before it (logging out a user whose
 // token is still perfectly valid).
 
+import { backendFetch } from './backend';
+
 export const ACCESS_COOKIE = 'pf_access';
 export const REFRESH_COOKIE = 'pf_refresh';
 export const ROLE_COOKIE = 'pf_role';
 export const USER_COOKIE = 'pf_user';
-
-const BASE = '/api/backend';
 
 // Renew this far ahead of expiry. Covers clock skew between browser and
 // backend plus the round trip, so a request is never sent with a token that
@@ -141,7 +141,7 @@ function persistSession(access: string, refresh: string, user: AuthUser) {
 // ---- flows ------------------------------------------------------------------
 
 export async function login(username: string, password: string): Promise<AuthUser> {
-  const res = await fetch(`${BASE}/auth/login`, {
+  const res = await backendFetch('/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
@@ -159,7 +159,7 @@ export async function register(input: {
   first_name?: string;
   last_name?: string;
 }): Promise<void> {
-  const res = await fetch(`${BASE}/auth/register`, {
+  const res = await backendFetch('/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -207,7 +207,7 @@ async function doRefresh(): Promise<RefreshOutcome> {
 
   let res: Response;
   try {
-    res = await fetch(`${BASE}/auth/refresh`, {
+    res = await backendFetch('/auth/refresh', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh }),

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Building2, LayoutGrid, LogIn, LogOut, Settings, Target, User } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { BackendSwitcher } from '@/components/backend-switcher';
 import { getUser, logout, type AuthUser } from '@/lib/auth-client';
 import { useSessionRefresh } from '@/hooks/use-session-refresh';
 
@@ -106,6 +107,7 @@ export function SiteHeader() {
                 </Link>
               </>
             ) : null}
+            <BackendSwitcher />
             <ThemeToggle />
           </div>
         </div>
