@@ -228,6 +228,7 @@ export interface RankingFilters {
   currency?: string;
   experience?: string;
   duration?: string;
+  enterprise?: string;
   sort?: string;
   page?: number;
   page_size?: number;
