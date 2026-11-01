@@ -30,6 +30,7 @@ function RankingContent() {
   const [currency, setCurrency] = useState('');
   const [experience, setExperience] = useState('');
   const [duration, setDuration] = useState('');
+  const [enterprise, setEnterprise] = useState('');
   const [page, setPage] = useState(1);
 
   const filters: RankingFiltersType = useMemo(
@@ -44,6 +45,7 @@ function RankingContent() {
       currency: currency || undefined,
       experience: experience || undefined,
       duration: duration || undefined,
+      enterprise: enterprise || undefined,
       sort: 'priority',
       page,
       page_size: ITEMS_PER_PAGE,
@@ -59,6 +61,7 @@ function RankingContent() {
       currency,
       experience,
       duration,
+      enterprise,
       page,
     ],
   );
@@ -133,6 +136,7 @@ function RankingContent() {
             currency={currency}
             experience={experience}
             duration={duration}
+            enterprise={enterprise}
             onGroupChange={(v) => { setGroup(v); resetToFirstPage(); }}
             onPlatformChange={(v) => { setPlatform(v); resetToFirstPage(); }}
             onTechStackChange={(v) => { setTechStack(v); resetToFirstPage(); }}
@@ -142,6 +146,7 @@ function RankingContent() {
             onCurrencyChange={(v) => { setCurrency(v); resetToFirstPage(); }}
             onExperienceChange={(v) => { setExperience(v); resetToFirstPage(); }}
             onDurationChange={(v) => { setDuration(v); resetToFirstPage(); }}
+            onEnterpriseChange={(v) => { setEnterprise(v); resetToFirstPage(); }}
           />
 
           <div>
